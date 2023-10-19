@@ -1,0 +1,12 @@
+# liquid.yaml
+
+# Parameters
+nc: 3  # Number of classes
+names: ['empty', 'half', 'full']  # Class names
+
+# Paths for training and validation datasets
+train: ./trainval_dataset/images/train/
+val: ./trainval_dataset/images/val
+
+# Number of channels, for RGB images it's 3
+channels: 3
