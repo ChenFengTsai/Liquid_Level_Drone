@@ -2,11 +2,11 @@ import cv2
 import torch
 
 # Paths (change these paths as per your system)
-weights_path = "./runs/train/exp3/weights/best.pt"
+weights_path = "yolov5/runs/train/exp2-best/weights/best.pt"
 
 
 # Setup YOLOv5 with custom model weights
-model = torch.hub.load('./', 'custom', path=weights_path, source='local')  # 'source' set to 'local' means don't download anything but use local files
+model = torch.hub.load('yolov5/', 'custom', path=weights_path, source='local')  # 'source' set to 'local' means don't download anything but use local files
 
 # Start video capture from the default computer's camera
 cap = cv2.VideoCapture(0)
