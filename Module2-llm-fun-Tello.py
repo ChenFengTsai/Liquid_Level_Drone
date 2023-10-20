@@ -1,22 +1,25 @@
-
 import cv2
 import torch
-import openai
+# import openai
 from djitellopy import Tello
 import azure.cognitiveservices.speech as speechsdk
-import threading
+#import threading
+import multiprocessing
 import time
+import drone_utils
 
 #########################
 # SETUP
 #########################
 
 # Constants
-YOLO_MODEL = 'ultralytics/yolov5s'
 AZURE_SUBSCRIPTION_KEY = '55f2007ae13640a59b52e03dad3361ea'
-AZURE_SERVICE_REGION = 'https://northcentralus.api.cognitive.microsoft.com/sts/v1.0/issuetoken'  # e.g., 'westus'
-OPENAI_API_KEY = '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'
+AZURE_SERVICE_REGION = 'https://northcentralus.api.cognitive.microsoft.com/sts/v1.0/issuetoken'
+#OPENAI_API_KEY = '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'
 TELLO_IP = '192.168.86.42'
+
+# Paths (change these paths as per your system)
+weights_path = "yolov5/runs/train/exp2-best/weights/best.pt"
 
 # --- TELLO DRONE SETUP ---
 tello = Tello(TELLO_IP)
@@ -38,17 +41,10 @@ if USE_CUDA:
     model = model.half()  # Half precision improves FPS
 print("YOLOv5 setup complete.")
 
-# Setup Azure Speech SDK
-print("Setting up Azure Speech SDK...")
-# speech_config = speechsdk.SpeechConfig(subscription=AZURE_SUBSCRIPTION_KEY, region=AZURE_SERVICE_REGION)
-speech_config = speechsdk.SpeechConfig(subscription='55f2007ae13640a59b52e03dad3361ea', endpoint="https://northcentralus.api.cognitive.microsoft.com/sts/v1.0/issuetoken")
-speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
-print("Azure Speech SDK setup complete.")
-
 # Setup OpenAI API
-print("Setting up OpenAI...")
-openai.api_key = OPENAI_API_KEY
-print("OpenAI setup complete.")
+# print("Setting up OpenAI...")
+# openai.api_key = OPENAI_API_KEY
+# print("OpenAI setup complete.")
 
 # ACTIONS TO COMMANDS MAPPING
 ACTIONS_TO_COMMANDS = {
@@ -84,62 +80,62 @@ def interpret_command_to_drone_action(command):
 def mock_execute_drone_command(command):
     print(f"Mock executed command: {command}")
 
-def get_interpretation_from_openai(command):
-    response = openai.Completion.create(
-        model="text-davinci-002",
-        prompt=f"What drone action corresponds to the command: '{command}'?",
-        max_tokens=50
-    )
-    interpreted_action = response.choices[0].text.strip().lower()
-    return interpret_command_to_drone_action(interpreted_action)
+# def get_interpretation_from_openai(command):
+#     response = openai.Completion.create(
+#         model="text-davinci-002",
+#         prompt=f"What drone action corresponds to the command: '{command}'?",
+#         max_tokens=50
+#     )
+#     interpreted_action = response.choices[0].text.strip().lower()
+#     return interpret_command_to_drone_action(interpreted_action)
 
-def execute_drone_command(command):
-    global in_flight
+# def execute_drone_command(command):
+#     global in_flight
 
-    if command == "takeoff":
-        if not in_flight:
-            tello.takeoff()
-            in_flight = True
-    elif command == "land":
-        if in_flight:
-            tello.land()
-            in_flight = False
-    elif in_flight:  # Only execute the following commands if the drone is in flight
-        if command == "move_forward":
-            tello.move_forward(20)
-    elif command == "move_forward":
-        tello.move_forward(20)  # Default to 20 cm. Adjust as needed.
-    elif command == "move_back":
-        tello.move_back(20)
-    elif command == "move_left":
-        tello.move_left(20)
-    elif command == "move_right":
-        tello.move_right(20)
-    elif command == "move_up":
-        tello.move_up(20)
-    elif command == "move_down":
-        tello.move_down(20)
-    elif command == "rotate_clockwise":
-        tello.rotate_clockwise(90)
-    elif command == "rotate_counter_clockwise":
-        tello.rotate_counter_clockwise(90)
-    elif command == "flip":
-        tello.flip("f")  # Default to forward flip. Adjust as needed.
-    elif command == "flip_backward":
-        tello.flip('b')
-    elif command == "flip_right":
-        tello.flip('r')
-    elif command == "streamon":
-        tello.streamon()
-    elif command == "streamoff":
-        tello.streamoff()
-    elif command == "go_xyz_speed":
-        x, y, z, speed = 20, 20, 20, 10
-        tello.go_xyz_speed(x, y, z, speed)
-    else:
-        print(f"Unknown command: {command}")
+#     if command == "takeoff":
+#         if not in_flight:
+#             tello.takeoff()
+#             in_flight = True
+#     elif command == "land":
+#         if in_flight:
+#             tello.land()
+#             in_flight = False
+#     elif in_flight:  # Only execute the following commands if the drone is in flight
+#         if command == "move_forward":
+#             tello.move_forward(20)
+#     elif command == "move_forward":
+#         tello.move_forward(20)  # Default to 20 cm. Adjust as needed.
+#     elif command == "move_back":
+#         tello.move_back(20)
+#     elif command == "move_left":
+#         tello.move_left(20)
+#     elif command == "move_right":
+#         tello.move_right(20)
+#     elif command == "move_up":
+#         tello.move_up(20)
+#     elif command == "move_down":
+#         tello.move_down(20)
+#     elif command == "rotate_clockwise":
+#         tello.rotate_clockwise(90)
+#     elif command == "rotate_counter_clockwise":
+#         tello.rotate_counter_clockwise(90)
+#     elif command == "flip":
+#         tello.flip("f")  # Default to forward flip. Adjust as needed.
+#     elif command == "flip_backward":
+#         tello.flip('b')
+#     elif command == "flip_right":
+#         tello.flip('r')
+#     elif command == "streamon":
+#         tello.streamon()
+#     elif command == "streamoff":
+#         tello.streamoff()
+#     elif command == "go_xyz_speed":
+#         x, y, z, speed = 20, 20, 20, 10
+#         tello.go_xyz_speed(x, y, z, speed)
+#     else:
+#         print(f"Unknown command: {command}")
 
-    return command
+#     return command
 
 def get_drone_status():
     # Basic status
@@ -172,16 +168,18 @@ def get_drone_status():
     
     return status_message
 
-def speak_feedback(feedback):
-    """Provide audio feedback to the operator using Text-to-Speech."""
-    voice_config = speechsdk.SpeechConfig(subscription='55f2007ae13640a59b52e03dad3361ea', endpoint="https://northcentralus.api.cognitive.microsoft.com/sts/v1.0/issuetoken")
-    synthesizer = speechsdk.SpeechSynthesizer(speech_config=voice_config)
-    synthesizer.speak_text_async(feedback).get()
+def setup_speechrecog():
+    # Setup Azure Speech SDK
+    print("Setting up Azure Speech SDK...")
+    speech_config = speechsdk.SpeechConfig(subscription='55f2007ae13640a59b52e03dad3361ea', endpoint="https://northcentralus.api.cognitive.microsoft.com/sts/v1.0/issuetoken")
+    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
+    print("Azure Speech SDK setup complete.")
+    return speech_recognizer
 
 def listen_to_commands():
     try:
+        speech_recognizer = setup_speechrecog()
         print("Listening for commands. Speak into your microphone...")
-        speak_feedback("Hello, let's go flying today.  Tell me what to do.")
         
         while True:
             command_heard = ""  # Initialize it at the start of the loop
@@ -205,40 +203,35 @@ def listen_to_commands():
 
                 drone_command = interpret_command_to_drone_action(command_heard)
                 
-                if not drone_command:
-                    # Get interpretation from OpenAI
-                    interpreted = get_interpretation_from_openai(command_heard)
-                    # Safeguard to ensure interpreted action is in our predefined list
-                    if interpreted in ACTIONS_TO_COMMANDS.values():
-                        drone_command = interpreted
+                # if not drone_command:
+                #     # Get interpretation from OpenAI
+                #     interpreted = get_interpretation_from_openai(command_heard)
+                #     # Safeguard to ensure interpreted action is in our predefined list
+                #     if interpreted in ACTIONS_TO_COMMANDS.values():
+                #         drone_command = interpreted
                 
                 if drone_command:
                     print(f"\nExecuting command: {drone_command}")
                     try:
-                        execute_drone_command(drone_command)
-                        #speak_feedback(f"Executed command: {drone_command}")
+                        command, in_flight = drone_utils.execute_drone_command(tello, drone_command, in_flight)
+                        print(f"Executed command: {command}")
                     except Exception as e:
                         print(f"Error executing the command: {e}")
-                        #speak_feedback(f"Failed to execute the command due to an error: {e}")
                 else:
                     print(f"\nCould not interpret the command: {command_heard}")
-                    #speak_feedback("Sorry, I couldn't interpret that command. Please try again.")
                     
             elif result.reason == speechsdk.ResultReason.NoMatch:
                 print("\nNo speech could be recognized.")
-                #speak_feedback("Sorry, I couldn't recognize any speech. Please try again.")
                 
             elif result.reason == speechsdk.ResultReason.Canceled:
                 cancellation = result.cancellation_details
                 print(f"\nSpeech Recognition canceled: {cancellation.reason}")
                 if cancellation.reason == speechsdk.CancellationReason.Error:
                     print(f"Error details: {cancellation.error_details}")
-                    #speak_feedback("Sorry, an error occurred. Please try again.")
 
             # Check for a command to end the program gracefully
             if "terminate program" in command_heard:
                 print("Terminating program...")
-                #speak_feedback("Terminating program. Goodbye!")
                 break
 
     except Exception as e:
@@ -262,6 +255,7 @@ def start_video_feed():
 
             # Convert to grayscale for faster processing
             frame_gray = cv2.cvtColor(frame_original, cv2.COLOR_BGR2GRAY)
+            # frame_rgb = cv2.cvtColor(frame_original, cv2.COLOR_BGR2RGB)
 
             # Resize for faster processing
             frame_resized = cv2.resize(frame_gray, (640, 480))
@@ -295,43 +289,7 @@ def start_video_feed():
     except Exception as e:
         print(f"Error starting the video feed: {e}")
         
-        
-# # def start_video_feed():
-#     try:
-#         # Start the Tello camera feed
-#         print("Attempting to start the Tello camera feed...")
-#         frame_read = tello.get_frame_read()
 
-#         if not frame_read:
-#             print("Failed to get Tello frame read. Exiting.")
-#             return
-        
-#         while True:
-#             frame = frame_read.frame
-            
-#             # Convert to grayscale for faster processing
-#             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            
-#             # Resize for faster processing
-#             frame_resized = cv2.resize(frame_gray, (640, 480))  # Adjust the resolution as needed
-            
-#             # If YOLO processing is needed:
-#             results = model(frame_resized)
-#             rendered_frame_small = results.render()[0]
-            
-#             # Resize the rendered frame to a larger resolution for display
-#             rendered_frame_large = cv2.resize(rendered_frame_small, (1280, 960))  # Double the display size, adjust as needed
-            
-#             cv2.imshow('YOLOv5 Tello Feed', rendered_frame_large)
-            
-#             if cv2.waitKey(1) == ord('q'):
-#                 break
-
-#         cv2.destroyAllWindows()
-#         print("Tello camera feed ended.")
-
-#     except Exception as e:
-#         print(f"Error starting the video feed: {e}")
 
 
 #########################
@@ -339,19 +297,43 @@ def start_video_feed():
 #########################
 
 if __name__ == "__main__":
-    # Start listening for voice commands
-    listen_to_commands_thread = threading.Thread(target=listen_to_commands)
-
-    listen_to_commands_thread.start()
-    time.sleep(5)  # Give a 5-second buffer before starting the video feed
     
-                  
+    # Setup YOLOv5 with custom model weights
+    model = torch.hub.load('yolov5/', 'custom', path=weights_path, source='local')
+    if USE_CUDA:
+        model = model.half()  # Half precision improves FPS
+        print("YOLOv5 setup complete.")
+        
+    # multiprocessing
+    listen_process = multiprocessing.Process(target=listen_to_commands)
+    # Start the listen_process
+    listen_process.start()
+
+    time.sleep(5)  # Give a 5-second buffer before starting the video feed
+
     # Start the video feed sequentially to avoid overloading the system
     start_video_feed()
-    time.sleep(5)  # Give a 5-second buffer before starting the video feed
+    time.sleep(5)
     
-    # Get the drone's status
     stats = get_drone_status()
     print(stats)
+
+    # Wait for the listen_process to finish, (not useful here since listen command never end untial you manual shut it)
+    listen_process.join()
+
+    # # Start listening for voice commands
+    # listen_to_commands_thread = threading.Thread(target=listen_to_commands)
+
+    # listen_to_commands_thread.start()
+    # time.sleep(5)  # Give a 5-second buffer before starting the video feed
+    
+                  
+    # # Start the video feed sequentially to avoid overloading the system
+    # start_video_feed()
+    # time.sleep(5)
+    
+    # # Get the drone's status
+    # stats = get_drone_status()
+    # print(stats)
 
     # listen_to_commands_thread.join()
