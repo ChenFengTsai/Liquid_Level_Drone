@@ -1,11 +1,10 @@
 
 import cv2
 import torch
-# import openai
 import azure.cognitiveservices.speech as speechsdk
-import threading
 import multiprocessing
 import time
+import os
 
 #########################
 # SETUP
@@ -21,13 +20,10 @@ USE_CUDA = torch.cuda.is_available()
 DEVICE = 'cuda:0' if USE_CUDA else 'cpu'
 
 # Paths (change these paths as per your system)
-weights_path = "yolov5/runs/train/exp2-best/weights/best.pt"
-
-# Setup YOLOv5 with custom model weights
-# model = torch.hub.load('yolov5/', 'custom', path=weights_path, source='local')
-    
-# model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).to(DEVICE)
-
+exp = "exp2-best"
+root_path =  "/Users/richtsai1103/liquid_level_drone"
+weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best.pt")
+model_path = os.path.join(root_path, "yolov5/")
 
 # Setup OpenAI API
 # print("Setting up OpenAI...")
@@ -67,14 +63,6 @@ def interpret_command_to_drone_action(command):
 def mock_execute_drone_command(command):
     print(f"Mock executed command: {command}")
 
-# def get_interpretation_from_openai(command):
-#     response = openai.Completion.create(
-#         model="text-davinci-002",
-#         prompt=f"What drone action corresponds to the command: '{command}'?",
-#         max_tokens=50
-#     )
-#     interpreted_action = response.choices[0].text.strip().lower()
-#     return interpret_command_to_drone_action(interpreted_action)
 def setup_speechrecog():
     # Setup Azure Speech SDK
     print("Setting up Azure Speech SDK...")
@@ -94,9 +82,6 @@ def listen_to_commands():
             print(f"Heard: {command_heard}")
             
             drone_command = interpret_command_to_drone_action(command_heard)
-            
-            # if not drone_command:
-            #     drone_command = get_interpretation_from_openai(command_heard)
             
             if drone_command:
                 mock_execute_drone_command(drone_command)

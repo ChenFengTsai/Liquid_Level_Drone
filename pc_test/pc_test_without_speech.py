@@ -1,12 +1,15 @@
 import cv2
 import torch
+import os
 
 # Paths (change these paths as per your system)
-weights_path = "yolov5/runs/train/exp2-best/weights/best.pt"
-
+exp = "exp2-best"
+root_path =  "/Users/richtsai1103/liquid_level_drone"
+weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best.pt")
+model_path = os.path.join(root_path, "yolov5/")
 
 # Setup YOLOv5 with custom model weights
-model = torch.hub.load('yolov5/', 'custom', path=weights_path, source='local')  # 'source' set to 'local' means don't download anything but use local files
+model = torch.hub.load(model_path, 'custom', path=weights_path, source='local')
 
 # Start video capture from the default computer's camera
 cap = cv2.VideoCapture(0)

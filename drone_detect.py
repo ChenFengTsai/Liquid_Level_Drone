@@ -21,25 +21,8 @@ TELLO_IP = '192.168.86.42'
 # Paths (change these paths as per your system)
 weights_path = "yolov5/runs/train/exp2-best/weights/best.pt"
 
-# --- TELLO DRONE SETUP ---
-tello = Tello(TELLO_IP)
-tello.connect()
-tello.streamoff()
-tello.streamon()
-
 # Assuming you initialize drone_state as 'landed' or 'flying' elsewhere in your script
 in_flight = False
-
-# Check CUDA availability
-USE_CUDA = torch.cuda.is_available()
-DEVICE = 'cuda:0' if USE_CUDA else 'cpu'
-
-# Setup YOLOv5
-print("Setting up YOLOv5...")
-model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True).to(DEVICE)
-if USE_CUDA:
-    model = model.half()  # Half precision improves FPS
-print("YOLOv5 setup complete.")
 
 # Setup OpenAI API
 # print("Setting up OpenAI...")
@@ -297,13 +280,24 @@ def start_video_feed():
 #########################
 
 if __name__ == "__main__":
+
+    # Check CUDA availability
+    USE_CUDA = torch.cuda.is_available()
+    DEVICE = 'cuda:0' if USE_CUDA else 'cpu'
     
     # Setup YOLOv5 with custom model weights
-    model = torch.hub.load('yolov5/', 'custom', path=weights_path, source='local')
+    model = torch.hub.load('yolov5/', 'custom', path=weights_path, source='local').to(DEVICE)
     if USE_CUDA:
         model = model.half()  # Half precision improves FPS
         print("YOLOv5 setup complete.")
-        
+    
+    # --- TELLO DRONE SETUP ---
+    print("Start Drone")
+    tello = Tello(TELLO_IP)
+    tello.connect()
+    tello.streamoff()
+    tello.streamon()
+    
     # multiprocessing
     listen_process = multiprocessing.Process(target=listen_to_commands)
     # Start the listen_process
