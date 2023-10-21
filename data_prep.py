@@ -6,16 +6,17 @@ image_directory = 'dataset/image/'
 output_directory = 'dataset/annotations/'
 train_val_directory = 'dataset/trainval_dataset/'
 
-data_utils.csv_to_annotation(input_csv_path, 
-                        image_directory, 
-                        output_directory, 
-                        class_dict)
+if __name__ == "__main__":
+    data_utils.csv_to_annotation(input_csv_path, 
+                            image_directory, 
+                            output_directory, 
+                            class_dict)
 
-data_utils.restructure(image_directory, 
-                  train_val_directory, 
-                  output_directory, 
-                  train_ratio=0.8, 
-                  random_seed=42)
+    data_utils.restructure(image_directory, 
+                    train_val_directory, 
+                    output_directory, 
+                    train_ratio=0.8, 
+                    random_seed=42)
 
 
 

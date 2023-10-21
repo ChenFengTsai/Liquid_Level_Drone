@@ -42,11 +42,43 @@ def execute_drone_command(tello, command, in_flight):
     elif command == "go_xyz_speed":
         x, y, z, speed = 20, 20, 20, 10
         tello.go_xyz_speed(x, y, z, speed)
+    elif command == "status":
+        stats = get_drone_status(tello)
+        print(stats)
     else:
         print(f"Unknown command: {command}")
 
     return command, in_flight
 
+def get_drone_status(tello):
+    # Basic status
+    battery_level = tello.get_battery()
+    drone_speed_x = tello.get_speed_x()
+    drone_speed_y = tello.get_speed_y()
+    drone_speed_z = tello.get_speed_z()
+    flight_time = tello.get_flight_time()
+    
+    # Additional status
+    min_temp = tello.get_lowest_temperature()  # Returns the lowest temperature
+    max_temp = tello.get_highest_temperature()  # Returns the highest temperature
+    pitch = tello.get_pitch()  # Returns the drone's pitch
+    roll = tello.get_roll()  # Returns the drone's roll
+    barometer = tello.get_barometer()  # Gets the barometer value in cm
+    flight_distance = tello.get_distance_tof()  # Gets the Time of Flight distance in cm
+    
+    status_message = (f"Drone Status:\n"
+                      f"Battery Level: {battery_level}%\n"
+                      f"Speed X: {drone_speed_x}cm/s\n"
+                      f"Speed Y: {drone_speed_y}cm/s\n"
+                      f"Speed Z: {drone_speed_z}cm/s\n"
+                      f"Flight Time: {flight_time} seconds\n"
+                      f"Min Temp: {min_temp}°C\n"
+                      f"Max Temp: {max_temp}°C\n"
+                      f"Pitch: {pitch}°\n"
+                      f"Roll: {roll}°\n"
+                      f"Barometer: {barometer}cm\n"
+                      f"Flight Distance (ToF): {flight_distance}cm")
+    return status_message
 
 def drone_private_conn():
     """
@@ -60,12 +92,12 @@ def drone_private_conn():
         
     # Connect to the drone
     drone = Tello()
-    drone.connect()
+    drone.connect(False)
 
     # Connect to your home WiFi
     drone.connect_to_wifi(wifi_name, wifi_password)
     
-    # manual reboost your drone
+    # reboot the drone
     
 if __name__ == "__main__":
     drone_private_conn()

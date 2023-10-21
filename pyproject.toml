@@ -11,6 +11,7 @@ azure-cognitiveservices-speech = "^1.32.1"
 djitellopy = "^2.5.0"
 
 
+
 [tool.poetry.group.dev.dependencies]
 gitpython = ">=3.1.30"
 matplotlib = ">=3.3"

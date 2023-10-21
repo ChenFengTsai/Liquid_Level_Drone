@@ -1,34 +1,27 @@
-
+# author: Chen Feng Tsai
 import cv2
 import torch
 import azure.cognitiveservices.speech as speechsdk
 import multiprocessing
 import time
 import os
+import configparser
 
 #########################
 # SETUP
 #########################
 
 # Constants
-AZURE_SUBSCRIPTION_KEY = '55f2007ae13640a59b52e03dad3361ea'
-AZURE_SERVICE_REGION = 'https://northcentralus.api.cognitive.microsoft.com/sts/v1.0/issuetoken'
-#OPENAI_API_KEY = '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'
-
-# Check CUDA availability
-USE_CUDA = torch.cuda.is_available()
-DEVICE = 'cuda:0' if USE_CUDA else 'cpu'
+config = configparser.ConfigParser()
+config.read('config.ini')
+AZURE_SUBSCRIPTION_KEY = config.get('API key', 'AZURE_SUBSCRIPTION_KEY')
+AZURE_SERVICE_REGION = config.get('API key', 'AZURE_SERVICE_REGION')
 
 # Paths (change these paths as per your system)
 exp = "exp2-best"
 root_path =  "/Users/richtsai1103/liquid_level_drone"
 weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best.pt")
 model_path = os.path.join(root_path, "yolov5/")
-
-# Setup OpenAI API
-# print("Setting up OpenAI...")
-# openai.api_key = OPENAI_API_KEY
-# print("OpenAI setup complete.")
 
 # ACTIONS TO COMMANDS MAPPING
 ACTIONS_TO_COMMANDS = {
@@ -88,7 +81,7 @@ def listen_to_commands():
             else:
                 print(f"Could not interpret the command: {command_heard}")
 
-def start_video_feed():
+def start_video_feed(model):
     try:
         # Start the camera feed
         print("Attempting to start the camera feed...")
@@ -134,6 +127,9 @@ def start_video_feed():
 #########################
 
 if __name__ == "__main__":
+    # Check CUDA availability
+    USE_CUDA = torch.cuda.is_available()
+    DEVICE = 'cuda:0' if USE_CUDA else 'cpu'
     
     # Setup YOLOv5 with custom model weights
     model = torch.hub.load('yolov5/', 'custom', path=weights_path, source='local')
@@ -146,13 +142,15 @@ if __name__ == "__main__":
     # Start the listen_process
     listen_process.start()
 
-    time.sleep(5)  # Give a 5-second buffer before starting the video feed
+    time.sleep(5)  # Give a 5-second buffer before starting the video feed to avoid overloading
 
-    # Start the video feed sequentially to avoid overloading the system
-    start_video_feed()
+    # Start the video feed
+    video_process = multiprocessing.Process(target=start_video_feed, args=(model,))
+    video_process.start()
 
-    # Wait for the listen_process to finish
+    # Wait for the all the processes to finish
     listen_process.join()
+    video_process.join()
     
     # This is for multithreading but not using it
     # # Start listening for voice commands
