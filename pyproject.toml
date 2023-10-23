@@ -9,6 +9,9 @@ readme = "README.md"
 python = "^3.11"
 azure-cognitiveservices-speech = "^1.32.1"
 djitellopy = "^2.5.0"
+speechrecognition = "^3.10.0"
+pyaudio = "^0.2.13"
+pynput = "^1.7.6"
 
 
 

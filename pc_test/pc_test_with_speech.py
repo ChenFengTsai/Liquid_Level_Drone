@@ -1,11 +1,12 @@
 # author: Chen Feng Tsai
 import cv2
 import torch
-import azure.cognitiveservices.speech as speechsdk
+#import azure.cognitiveservices.speech as speechsdk
 import multiprocessing
 import time
 import os
 import configparser
+import speech_recognition as sr
 
 #########################
 # SETUP
@@ -14,8 +15,8 @@ import configparser
 # Constants
 config = configparser.ConfigParser()
 config.read('config.ini')
-AZURE_SUBSCRIPTION_KEY = config.get('API key', 'AZURE_SUBSCRIPTION_KEY')
-AZURE_SERVICE_REGION = config.get('API key', 'AZURE_SERVICE_REGION')
+# AZURE_SUBSCRIPTION_KEY = config.get('API key', 'AZURE_SUBSCRIPTION_KEY')
+# AZURE_SERVICE_REGION = config.get('API key', 'AZURE_SERVICE_REGION')
 
 # Paths (change these paths as per your system)
 exp = "exp2-best"
@@ -56,31 +57,41 @@ def interpret_command_to_drone_action(command):
 def mock_execute_drone_command(command):
     print(f"Mock executed command: {command}")
 
-def setup_speechrecog():
-    # Setup Azure Speech SDK
-    print("Setting up Azure Speech SDK...")
-    speech_config = speechsdk.SpeechConfig(subscription='55f2007ae13640a59b52e03dad3361ea', endpoint="https://northcentralus.api.cognitive.microsoft.com/sts/v1.0/issuetoken")
-    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
-    print("Azure Speech SDK setup complete.")
-    return speech_recognizer
+# def setup_speechrecog():
+#     # Setup Azure Speech SDK
+#     print("Setting up Azure Speech SDK...")
+#     speech_config = speechsdk.SpeechConfig(subscription='55f2007ae13640a59b52e03dad3361ea', endpoint="https://northcentralus.api.cognitive.microsoft.com/sts/v1.0/issuetoken")
+#     speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
+#     print("Azure Speech SDK setup complete.")
+#     return speech_recognizer
     
 def listen_to_commands():
-    speech_recognizer = setup_speechrecog()
+    speech_recognizer = sr.Recognizer()
+    # speech_recognizer = setup_speechrecog()
     print("Listening for commands. Speak into your microphone...")
-    while True:
-        print("Awaiting command...")
-        result = speech_recognizer.recognize_once()
-        if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            command_heard = result.text.lower().strip('.')
-            print(f"Heard: {command_heard}")
+    with sr.Microphone() as source:
+        while True:
+            print("Awaiting command...")
+            audio = speech_recognizer.listen(source, timeout = 10, phrase_time_limit = 3)
+            try:
+                command_heard = speech_recognizer.recognize_google(audio).lower()
             
-            drone_command = interpret_command_to_drone_action(command_heard)
+            # result = speech_recognizer.recognize_once()
+            # if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+            #     command_heard = result.text.lower().strip('.')
+                print(f"Heard: {command_heard}")
+            except sr.UnknownValueError:
+                continue
+            if command_heard:
+                drone_command = interpret_command_to_drone_action(command_heard)
+            else:
+                print("Nothing is heard.")
             
             if drone_command:
                 mock_execute_drone_command(drone_command)
             else:
-                print(f"Could not interpret the command: {command_heard}")
-
+                print(f"Not a valid action term: {command_heard}")
+            time.sleep(5)
 def start_video_feed(model):
     try:
         # Start the camera feed
@@ -107,8 +118,8 @@ def start_video_feed(model):
             # If YOLO processing is needed:
             # flip it
             frame = cv2.flip(frame, 1)
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = model(frame_rgb)
+            #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = model(frame)
             rendered_frame = results.render()[0]
             cv2.imshow('YOLOv5', rendered_frame)
             
