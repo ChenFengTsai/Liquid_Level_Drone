@@ -1,39 +1,51 @@
 import cv2
+import os
 
-# Replace 'input_video.avi' with the path to your input AVI file
-input_video_path = 'video_result/exp2-best/video_2023-10-24_02-40-16.avi'
-cap = cv2.VideoCapture(input_video_path)
+def convert_avi_to_mp4(input_video, output_video, experiment):
+    # Open the input AVI file
+    video_directory = os.path.join('video_result', experiment)
+    input_path = os.path.join(video_directory, input_video)
+    output_path = os.path.join(video_directory, output_video)
+    cap = cv2.VideoCapture(input_path)
 
-# Define the output MP4 file properties
-output_video_path = 'video_result/exp2-best/video_2023-10-24_02-40-16.mp4'
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for MP4 format
-fps = cap.get(cv2.CAP_PROP_FPS)  # Get the frame rate of the input video
-frame_size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+    # Check if the input video file was opened successfully
+    if not cap.isOpened():
+        print("Error: Could not open the input video file.")
+        return
 
-# Create a video writer object for the MP4 file
-out = cv2.VideoWriter(output_video_path, fourcc, fps, frame_size)
+    # Define the output MP4 file properties
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for MP4 format
+    fps = cap.get(cv2.CAP_PROP_FPS)  # Get the frame rate of the input video
+    frame_size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
-if not cap.isOpened():
-    print("Error: Could not open the input video file.")
-    exit()
-    
-while True:
-    # Read a frame from the input video
-    ret, frame = cap.read()
+    # Create a video writer object for the MP4 file
+    out = cv2.VideoWriter(output_path, fourcc, fps, frame_size)
 
-    # If the end of the video is reached, break the loop
-    if not ret:
-        break
+    while True:
+        # Read a frame from the input video
+        ret, frame = cap.read()
 
-    # Process the frame here (e.g., apply image processing)
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    # Write the processed frame to the output MP4 file
-    for _ in range(10):
-        out.write(frame)
-    
-# Release the video objects
-cap.release()
-out.release()
+        # If the end of the video is reached, break the loop
+        if not ret:
+            break
 
-# Display a message indicating successful conversion
-print("Video conversion from AVI to MP4 completed.")
+        # Process the frame here (e.g., apply image processing)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Write the processed frame to the output MP4 file (in this case, it repeats each frame 10 times)
+        for _ in range(10):
+            out.write(frame)
+
+    # Release the video objects
+    cap.release()
+    out.release()
+
+    # Display a message indicating successful conversion
+    print("Video conversion from AVI to MP4 completed.")
+
+if __name__ == "__main__":
+# Usage example:
+    input_video = 'video_2023-10-24_02-40-16.avi'
+    output_video = 'video_2023-10-24_02-40-16.mp4'
+    experiment = 'exp2-best'
+    convert_avi_to_mp4(input_video, output_video, experiment)
