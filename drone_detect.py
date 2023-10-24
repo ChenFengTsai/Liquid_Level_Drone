@@ -575,14 +575,13 @@ if __name__ == "__main__":
         print("Press 'w' to move forward, 's' to move backward.")
         print("Press 'a' to move left, 'd' to move right.")
         print("Press 'Space' to take off, 'Esc' to land.")
-
-        # Start the PyQt application
-        sys.exit(app.exec_())
-
         
     else:
         listen_thread = threading.Thread(target=listen_to_commands, args=(drone_ops, mock))
         listen_thread.start()
+    
+    # Start the PyQt application
+    sys.exit(app.exec_())
 
     
     # multipreocess for inference stage
