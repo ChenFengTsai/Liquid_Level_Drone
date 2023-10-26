@@ -11,4 +11,4 @@ val: /Users/richtsai1103/liquid_level_drone/dataset/trainval_dataset/images/val
 # Number of channels, for RGB images it's 3
 channels: 3
 
-# python3 yolov5/train.py --img 640 --batch 16 --epochs 1 --data liquid.yaml --cfg yolov5/models/yolov5s.yaml
+# python3 yolov5/train.py --img 640 --batch 16 --epochs 100 --data liquid.yaml --cfg yolov5/models/yolov5s.yaml

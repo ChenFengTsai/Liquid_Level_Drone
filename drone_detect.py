@@ -228,7 +228,7 @@ class CameraViewer(QMainWindow):
     def update_frame(self):
         frame_original = self.frame_read.frame
 
-        # Convert the OpenCV frame to a QImage
+        # Crop the image to make it more focued on smaller portion of the frame
         height, width, channel = frame_original.shape
         crop_x1 = width // 4  # Adjust the cropping region as needed
         crop_x2 = 3 * width // 4

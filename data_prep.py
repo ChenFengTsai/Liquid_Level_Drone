@@ -1,6 +1,7 @@
 import data_utils
 
 class_dict = {"empty": 0, "half": 1, "full": 2}
+
 input_csv_path = 'dataset/aggregated_annotations.csv'
 image_directory = 'dataset/image/'
 output_directory = 'dataset/annotations/'
