@@ -31,7 +31,7 @@ config.read('config.ini')
 TELLO_IP = config.get('tello', 'ip')
 
 # Paths (change these paths as per your system)
-exp = "exp2-best"
+exp = "exp6_newdata_100epoch"
 root_path =  "/Users/richtsai1103/liquid_level_drone"
 weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best.pt")
 model_path = os.path.join(root_path, "yolov5/")
@@ -208,13 +208,14 @@ class CameraViewer(QMainWindow):
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.output_file = f'video_{self.timestamp}' + f'.{self.file_format}'
         self.output_path = os.path.join(self.output_directory, self.output_file)
+        
+        if self.save_video:
+            if self.file_format == 'mp4':
+                self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            elif self.file_format == 'avi':
+                self.fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for AVI format
 
-        if self.file_format == 'mp4':
-            self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        elif self.file_format == 'avi':
-            self.fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for AVI format
-
-        self.out = cv2.VideoWriter(self.output_path, self.fourcc, self.fps, (self.video_width, self.video_height))
+            self.out = cv2.VideoWriter(self.output_path, self.fourcc, self.fps, (self.video_width, self.video_height))
         
         self.label = QLabel(self)
         self.layout.addWidget(self.label)
@@ -559,7 +560,7 @@ if __name__ == "__main__":
     
     # multi-threading
     app = QApplication(sys.argv)
-    viewer = CameraViewer(save_video=True, file_format='avi')
+    viewer = CameraViewer(save_video=False, file_format='avi')
     viewer.show()
     
     if control_with_kb:
