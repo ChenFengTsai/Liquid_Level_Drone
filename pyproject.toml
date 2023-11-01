@@ -15,6 +15,7 @@ pynput = "^1.7.6"
 opencv-python = "^4.8.1.78"
 pillow = "^10.1.0"
 pyqt5 = "^5.15.10"
+google-cloud-storage = "^2.13.0"
 
 
 
