@@ -65,7 +65,7 @@ class DroneUtils:
 
         return command
 
-    def lawnmower_pattern(self, distance=100, wait_time=10, segments=3, direction="left"):
+    def lawnmower_pattern(self, distance=100, wait_time=20, segments=3, direction="left"):
         segment_distance = distance // segments
         for _ in range(segments):
             print(f'\nMoving {direction} with {segment_distance}cm for next object')
@@ -109,7 +109,7 @@ class DroneUtils:
 
         # adjust the threshold for drone movement
         threshold = 40
-        distance_threshold = (180, 250)
+        distance_threshold = (240, 430)
 
         # Send control commands to the drone based on the delta values
         if abs(delta_x) > threshold:

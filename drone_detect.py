@@ -32,7 +32,7 @@ config.read('config.ini')
 TELLO_IP = config.get('tello', 'ip')
 
 # Paths (change these paths as per your system)
-exp = "exp6_newdata_100epoch"
+exp = "exp_500"
 root_path =  "/Users/richtsai1103/liquid_level_drone"
 weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best.pt")
 model_path = os.path.join(root_path, "yolov5/")
@@ -203,7 +203,7 @@ class CameraViewer(QMainWindow):
         # Calculate the center of the bounding box if any object is detected
         self.make_center = drone_ops.make_center
         
-        center_interval = 2
+        center_interval = 5
 
         try:
             if drone_control_kb['navigation'] \
@@ -211,13 +211,12 @@ class CameraViewer(QMainWindow):
                     and (time.time() - self.last_center_time > center_interval \
                     or drone_ops.center_times == 0):
                 print('\nStart Centering')
-                print(results.pred[0][:4][0])
-                print(drone_ops.center_times)
+                # print(results.pred[0][:4][0])
+                print(f'Centering times: {drone_ops.center_times}')
+                print(time.time() - self.last_center_time)
                 drone_ops.center(results.pred[0][:4][0])
                 self.last_center_time = time.time()
                 drone_ops.center_times += 1
-                
-            
         except Exception:
             pass
 
@@ -467,6 +466,7 @@ if __name__ == "__main__":
     in_flight = False
     mock = False
     control_with_kb = True
+    save_video = True
     drone_ops = DroneUtils(tello, in_flight)
     # start video streaming 
     tello.streamon()
@@ -478,7 +478,7 @@ if __name__ == "__main__":
     
     # multi-threading
     app = QApplication(sys.argv)
-    viewer = CameraViewer(save_video=False, file_format='avi')
+    viewer = CameraViewer(save_video=save_video, file_format='avi')
     viewer.show()
     
     if control_with_kb:

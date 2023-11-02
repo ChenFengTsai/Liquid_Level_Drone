@@ -45,7 +45,9 @@ def convert_avi_to_mp4(input_video, output_video, experiment):
 
 if __name__ == "__main__":
 # Usage example:
-    input_video = 'video_2023-10-24_02-40-16.avi'
-    output_video = 'video_2023-10-24_02-40-16.mp4'
-    experiment = 'exp2-best'
+
+    experiment = 'exp_500'
+    input_video = 'video_2023-11-02_14-27-52.avi'
+    output_video = 'video_2023-11-02_14-27-52.mp4'
+
     convert_avi_to_mp4(input_video, output_video, experiment)
