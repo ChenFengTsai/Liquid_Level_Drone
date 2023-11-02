@@ -12,6 +12,7 @@ from drone_utils import DroneUtils
 import configparser
 import os
 import speech_recognition as sr
+import numpy as np
 
 import sys
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
@@ -63,6 +64,7 @@ drone_control_kb = {
     'move': "",
     'takeoff': False,
     'land': False,
+    'navigation': False
 }
         
 
@@ -79,18 +81,9 @@ def interpret_command_to_drone_action(command):
 def mock_execute_drone_command(command):
     print(f"Mock executed command: {command}")
 
-# def setup_speechrecog():
-#     # Setup Azure Speech SDK
-#     print("Setting up Azure Speech SDK...")
-#     speech_config = speechsdk.SpeechConfig(subscription='55f2007ae13640a59b52e03dad3361ea', endpoint="https://northcentralus.api.cognitive.microsoft.com/sts/v1.0/issuetoken")
-#     speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
-#     print("Azure Speech SDK setup complete.")
-#     return speech_recognizer
-
 def listen_to_commands(drone_ops, mock):
     # verbal commabd to control drone
     try:
-        #speech_recognizer = setup_speechrecog()
         speech_recognizer = sr.Recognizer()
         print("Listening for commands. Speak into your microphone...")
         
@@ -101,25 +94,11 @@ def listen_to_commands(drone_ops, mock):
                 audio = speech_recognizer.listen(source, phrase_time_limit = 3)
                 try:
                     command_heard = speech_recognizer.recognize_google(audio).lower()
-                
-                # result = speech_recognizer.recognize_once()
-                # if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-                #     command_heard = result.text.lower().strip('.')
                     print(f"Heard: {command_heard}")
                 except sr.UnknownValueError:
                     # keep sending signal to prevent auto shutdown
                     drone_ops.tello.send_control_command('command')
                     continue
-            
-            # result = speech_recognizer.recognize_once()
-            
-            # if result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            #     try:
-            #         command_heard = result.text.lower().strip('.')
-            #         print(f"\nHeard: {command_heard}")
-            #     except Exception as e:  # Using a more generic exception to catch any unexpected errors
-            #         print(f"Error processing heard command: {e}")
-            #         command_heard = ""
             
                 if command_heard:
                     drone_command = interpret_command_to_drone_action(command_heard)
@@ -143,16 +122,6 @@ def listen_to_commands(drone_ops, mock):
                     drone_ops.tello.send_control_command('command')
                     print(f"Not a valid action term: {command_heard}")
 
-                    
-            # elif result.reason == speechsdk.ResultReason.NoMatch:
-            #     print("\nNo speech could be recognized.")
-                
-            # elif result.reason == speechsdk.ResultReason.Canceled:
-            #     cancellation = result.cancellation_details
-            #     print(f"\nSpeech Recognition canceled: {cancellation.reason}")
-            #     if cancellation.reason == speechsdk.CancellationReason.Error:
-            #         print(f"Error details: {cancellation.error_details}")
-
                 # Check for a command to end the program gracefully
                 if "stop" in command_heard:
                     print("Terminating program...")
@@ -164,24 +133,6 @@ def listen_to_commands(drone_ops, mock):
     except Exception as e:
         print(f"Error in recognizing speech: {e}")
 
-
-def control_drone(mock):
-    # control with kb
-    while True:
-        if mock:
-            mock_execute_drone_command(drone_control_kb['move'])
-            time.sleep(1)
-        else:
-            if drone_control_kb['takeoff']:
-                tello.takeoff()
-                drone_control_kb['takeoff'] = False
-            elif drone_control_kb['land']:
-                tello.land()
-                drone_control_kb['land'] = False
-            else:
-                time.sleep(1)
-                drone_ops.execute_drone_command(drone_control_kb['move'])
-                drone_control_kb['move'] = ""
 
 
 class CameraViewer(QMainWindow):
@@ -198,6 +149,7 @@ class CameraViewer(QMainWindow):
         
         self.save_video = save_video
         self.file_format = file_format
+        self.make_center = False
         
         # Initialize video recording attributes
         self.fps = 30.0  # Frames per second
@@ -221,11 +173,13 @@ class CameraViewer(QMainWindow):
         self.layout.addWidget(self.label)
 
         self.frame_read = tello.get_frame_read()  # Open the default camera (usually index 0)
-
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
-        self.timer.start(1)  # Update every 30 milliseconds (adjust as needed)
+        self.timer.start(1)  # Update every 1 milliseconds (adjust as needed)
+        
+        self.last_center_time = time.time()
 
+        
     def update_frame(self):
         frame_original = self.frame_read.frame
 
@@ -240,13 +194,36 @@ class CameraViewer(QMainWindow):
         # Resize for faster processing 
         # todo: (keep the same 640 since we trained on 640 or train model in 320)
         frame_resized = cv2.resize(cropped_image, (320, 320))
-
+        
         # YOLO processing on low-res frame
         results = model(frame_resized)
-        rendered_frame_small = results.render()[0]
+        self.rendered_frame_small = results.render()[0]
+        
+        # todo: navigation start here
+        # Calculate the center of the bounding box if any object is detected
+        self.make_center = drone_ops.make_center
+        
+        center_interval = 2
 
+        try:
+            if drone_control_kb['navigation'] \
+                and self.make_center \
+                    and (time.time() - self.last_center_time > center_interval \
+                    or drone_ops.center_times == 0):
+                print('\nStart Centering')
+                print(results.pred[0][:4][0])
+                print(drone_ops.center_times)
+                drone_ops.center(results.pred[0][:4][0])
+                self.last_center_time = time.time()
+                drone_ops.center_times += 1
+                
+            
+        except Exception:
+            pass
+
+            
         # Resize the rendered frame to a larger resolution for display
-        rendered_frame_large = cv2.resize(rendered_frame_small, (640, 640)) 
+        rendered_frame_large = cv2.resize(self.rendered_frame_small, (640, 640)) 
         
         # Save the frame to the video file (if video recording is enabled)
         if self.save_video:
@@ -259,13 +236,35 @@ class CameraViewer(QMainWindow):
 
         # Display the QImage in the QLabel
         self.label.setPixmap(QPixmap.fromImage(q_image))
+
         
     def closeEvent(self, event):
         # Release the video writer when the application is closed
         if self.save_video:
             self.out.release()
         super().closeEvent(event)
-        
+
+def control_drone(mock):
+    # control with kb
+    while True:
+        if mock:
+            mock_execute_drone_command(drone_control_kb['move'])
+            time.sleep(1)
+        else:
+            if drone_control_kb['takeoff']:
+                tello.takeoff()
+                drone_control_kb['takeoff'] = False
+            elif drone_control_kb['land']:
+                tello.land()
+                drone_control_kb['land'] = False
+            elif drone_control_kb['navigation']:
+                drone_ops.execute_drone_command('navigation')
+                drone_control_kb['navigation'] = False
+            else:
+                time.sleep(1)
+                drone_ops.execute_drone_command(drone_control_kb['move'])
+                drone_control_kb['move'] = ""
+                      
 # Class for keyboard control listener
 class KeyboardListener(QThread):
     key_pressed = pyqtSignal(object)
@@ -293,6 +292,12 @@ def handle_key_press(key, drone_control_kb):
             drone_control_kb['move'] = 'move_up'
         elif key.char == 'q':
             drone_control_kb['move'] = 'move_down'
+        elif key.char == 'k':
+            drone_control_kb['move'] = 'rotate_clockwise'
+        elif key.char == 'j':
+            drone_control_kb['move'] = 'rotate_counter_clockwise'
+        elif key.char == 'z':
+            drone_control_kb['navigation'] = True
     except AttributeError:
         if key == keyboard.Key.space:
             drone_control_kb['takeoff'] = True
@@ -301,94 +306,7 @@ def handle_key_press(key, drone_control_kb):
 
     print(drone_control_kb)  # Print the updated drone control commands
         
-        
-# def start_video_feed(model, tello, save_video=False, file_format='avi'):
-#     # start getting video stream from tello
-#     try:
-#         print("Attempting to start the Tello camera feed...")
-#         frame_read = tello.get_frame_read()
-
-#         if not frame_read:
-#             print("Failed to get Tello frame read. Exiting.")
-#             return
-        
-#         last_report_time = time.time()
-#         report_interval = 10  # seconds
-
-#         # video saving
-#         if save_video:
-#             fps = 30.0  # Frames per second
-#             video_width = 640  # Width of the output video frame
-#             video_height = 640  # Height of the output video frame
-#             output_directory = os.path.join('video_result', exp)
-#             os.makedirs(output_directory, exist_ok=True)
-#             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-#             output_file = f'video_{timestamp}' + f'.{file_format}' 
-#             output_path = os.path.join('video_result', output_file)
-#             if file_format == 'mp4':
-#                 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-#             elif file_format == 'avi':
-#                 fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for AVI format
-            
-#             out = cv2.VideoWriter(output_path, fourcc, fps, (video_width, video_height))
-
-        
-#         while True:
-#             # Original high-resolution frame
-#             frame_original = frame_read.frame
-#             # cropping to focus more (prevent drone from moving too close to the object)
-#             height, width, _ = frame_original.shape
-#             crop_x1 = width // 4  # Adjust the cropping region as needed
-#             crop_x2 = 3 * width // 4
-#             crop_y1 = height // 4
-#             crop_y2 = 3 * height // 4
-#             cropped_image = frame_original[crop_y1:crop_y2, crop_x1:crop_x2]
-
-#             # Convert bgr to rgb (since drone)
-#             # frame_gray = cv2.cvtColor(frame_original, cv2.COLOR_BGR2GRAY)
-#             frame_rgb = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
-
-#             # Resize for faster processing 
-#             # todo: (keep the same 640 since we trained on 640 or train model in 320)
-#             frame_resized = cv2.resize(frame_rgb, (320, 320))
-
-#             # YOLO processing on low-res frame
-#             results = model(frame_resized)
-#             rendered_frame_small = results.render()[0]
-
-#             # Resize the rendered frame to a larger resolution for display
-#             rendered_frame_large = cv2.resize(rendered_frame_small, (640, 640))  
-
-#             # If it's time to report detections
-#             if time.time() - last_report_time > report_interval:
-#                 for detection in results.pred[0]:
-#                     x1, y1, x2, y2, conf, class_id = map(float, detection)
-#                     label = results.names[int(class_id)]
-#                     print(f"Detected: {label}, Confidence: {conf:.2f}")
-#                 # Reset the report timer after reporting
-#                 last_report_time = time.time()
-#                 print("-------")
-#             # save video
-#             if save_video:
-#                 out.write(rendered_frame_large)
-                
-#             # Display the high-resolution frame with detections overlaid
-#             cv2.imshow('YOLOv5 Tello Feed', rendered_frame_large)
-
-#             if cv2.waitKey(1) == ord('q'):
-#                 break
-            
-#         if save_video:
-#             out.release()  # Release the output video file
-
-#         cv2.destroyAllWindows()
-#         print("Tello camera feed ended.")
-
-#     except Exception as e:
-#         print(f"Error starting the video feed: {e}")
-        
-    
-    
+       
 # todo: multiprocessing for model inference (too slow probably because of the queue)
 # def get_video_stream(model, tello, save=False):
 #     try:

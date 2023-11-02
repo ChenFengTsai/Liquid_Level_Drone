@@ -1,10 +1,13 @@
 import configparser
 from djitellopy import Tello
+import time
 
 class DroneUtils:
     def __init__(self, tello, in_flight):
         self.tello = tello
         self.in_flight = in_flight
+        self.make_center = False
+        self.center_times = 0
         
     def execute_drone_command(self, command):
         dist = 20
@@ -31,9 +34,9 @@ class DroneUtils:
         elif command == "move_down":
             self.tello.move_down(dist)
         elif command == "rotate_clockwise":
-            self.tello.rotate_clockwise(90)
+            self.tello.rotate_clockwise(30)
         elif command == "rotate_counter_clockwise":
-            self.tello.rotate_counter_clockwise(90)
+            self.tello.rotate_counter_clockwise(30)
         elif command == "flip":
             self.tello.flip("f")  # Default to forward flip. Adjust as needed.
         elif command == "flip_backward":
@@ -47,6 +50,9 @@ class DroneUtils:
         elif command == "go_xyz_speed":
             x, y, z, speed = dist, dist, dist, 10
             self.tello.go_xyz_speed(x, y, z, speed)
+        elif command == 'navigation':
+            self.zigzag_movement()
+             
         elif command == "status":
             stats = self.get_drone_status(self.tello)
             print(stats)
@@ -59,6 +65,92 @@ class DroneUtils:
 
         return command
 
+    def lawnmower_pattern(self, distance=100, wait_time=10, segments=3, direction="left"):
+        segment_distance = distance // segments
+        for _ in range(segments):
+            print(f'\nMoving {direction} with {segment_distance}cm for next object')
+            if direction == "left":
+                self.tello.move_left(segment_distance)
+            else: 
+                self.tello.move_right(segment_distance)
+            self.center_times = 0
+                
+            # todo: start centering
+            self.make_center = True
+            # 10 seconds for centering, change it if needed
+            time.sleep(wait_time)
+            
+            # end centering and start moving
+            self.make_center = False
+            
+
+    def zigzag_movement(self, patterns=1, distance=50, height=100, segments=1):
+        directions = ["left", "right", "left"]  # Starting from bottom right, as specified
+        for i in range(patterns):
+            self.lawnmower_pattern(distance=distance, segments=segments, direction=directions[i])
+            if i < patterns - 1:  # Don't move up after the last pattern
+                self.tello.move_up(height)
+                
+    def center(self, bbox):
+        center_x = (bbox[0] + bbox[2]) / 2
+        center_y = (bbox[1] + bbox[3]) / 2
+
+        # Calculate the desired center within your frame
+        desired_center_x = 320 / 2  # Half of the frame width
+        desired_center_y = 320 / 2  # Half of the frame height
+
+        # Calculate the direction and distance to move the drone
+        delta_x = center_x - desired_center_x
+        print(f'Object away from center: {delta_x}_x')
+        delta_y = center_y - desired_center_y
+        print(f'Object away from center: {delta_y}_y')
+        distance = ((bbox[0]-bbox[2])**2 + (bbox[1]+bbox[3])**2)**0.5
+        print(f'Box size: {distance}')
+
+        # adjust the threshold for drone movement
+        threshold = 40
+        distance_threshold = (180, 250)
+
+        # Send control commands to the drone based on the delta values
+        if abs(delta_x) > threshold:
+            # Adjust the drone's horizontal position
+            if delta_x > 0:
+                # Move right
+                self.execute_drone_command('move_right')
+                print('Centering: Move Right')
+            else:
+                # Move left
+                self.execute_drone_command('move_left')
+                print('Centering: Move Left')
+
+        if abs(delta_y) > threshold:
+            # Adjust the drone's vertical position
+            if delta_y > 0:
+                # Move down
+                self.execute_drone_command('move_down')
+                print('Centering: Move Down')
+            else:
+                # Move up
+                self.execute_drone_command('move_up')
+                print('Centering: Move Up')
+        
+        if distance < distance_threshold[0]:
+            # Move forward
+            self.execute_drone_command('move_forward')
+            print('Centering: Move Forward')
+            
+        elif distance > distance_threshold[1]:
+            # Move back
+            self.execute_drone_command('move_back')
+            print('Centering: Move Back')
+            
+        if abs(delta_x) <= threshold \
+            and abs(delta_y) <= threshold \
+                and distance_threshold[0] <= distance <= distance_threshold[1]:
+            # make as finished centering
+            self.make_center = False
+                
+            
     def get_drone_status(self):
         # Basic status
         battery_level = self.tello.get_battery()
