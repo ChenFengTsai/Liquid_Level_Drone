@@ -65,7 +65,7 @@ class DroneUtils:
 
         return command
 
-    def lawnmower_pattern(self, distance=100, wait_time=20, segments=3, direction="left"):
+    def lawnmower_pattern(self, distance=100, wait_time=10, segments=1, direction="left"):
         segment_distance = distance // segments
         for _ in range(segments):
             print(f'\nMoving {direction} with {segment_distance}cm for next object')
@@ -80,16 +80,17 @@ class DroneUtils:
             # 10 seconds for centering, change it if needed
             time.sleep(wait_time)
             
-            # end centering and start moving
-            self.make_center = False
+        # end centering and start moving
+        self.make_center = False
             
 
-    def zigzag_movement(self, patterns=1, distance=50, height=100, segments=1):
+    def zigzag_movement(self, patterns=3, distance=40, height=40, segments=1, wait_time=10):
         directions = ["left", "right", "left"]  # Starting from bottom right, as specified
         for i in range(patterns):
             self.lawnmower_pattern(distance=distance, segments=segments, direction=directions[i])
             if i < patterns - 1:  # Don't move up after the last pattern
                 self.tello.move_up(height)
+                time.sleep(wait_time)
                 
     def center(self, bbox):
         center_x = (bbox[0] + bbox[2]) / 2
@@ -108,8 +109,8 @@ class DroneUtils:
         print(f'Box size: {distance}')
 
         # adjust the threshold for drone movement
-        threshold = 40
-        distance_threshold = (240, 430)
+        threshold = 80
+        distance_threshold = (220, 480)
 
         # Send control commands to the drone based on the delta values
         if abs(delta_x) > threshold:

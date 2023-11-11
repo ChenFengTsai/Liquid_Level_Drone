@@ -211,12 +211,12 @@ class CameraViewer(QMainWindow):
                     and (time.time() - self.last_center_time > center_interval \
                     or drone_ops.center_times == 0):
                 print('\nStart Centering')
-                # print(results.pred[0][:4][0])
                 print(f'Centering times: {drone_ops.center_times}')
                 print(time.time() - self.last_center_time)
                 drone_ops.center(results.pred[0][:4][0])
                 self.last_center_time = time.time()
                 drone_ops.center_times += 1
+                
         except Exception:
             pass
 
@@ -473,8 +473,8 @@ if __name__ == "__main__":
     
     # get better real-time performance
     tello.set_video_fps(tello.FPS_30)
-    tello.set_video_resolution(tello.RESOLUTION_480P)
-    tello.set_video_bitrate(tello.BITRATE_2MBPS)
+    tello.set_video_resolution(tello.RESOLUTION_720P)
+    tello.set_video_bitrate(tello.BITRATE_4MBPS)
     
     # multi-threading
     app = QApplication(sys.argv)
