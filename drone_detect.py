@@ -32,8 +32,8 @@ config.read('config.ini')
 TELLO_IP = config.get('tello', 'ip')
 
 # Paths (change these paths as per your system)
-exp = "exp_500"
-root_path =  "/Users/richtsai1103/liquid_level_drone"
+exp = "exp_ep500_img_640_v2"
+root_path =  "/Users/nicolasferreira/Documents/UChicago/Autumn 2023/Capstone II/liquid_level_drone"
 weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best.pt")
 model_path = os.path.join(root_path, "yolov5/")
 
@@ -468,13 +468,13 @@ if __name__ == "__main__":
     control_with_kb = True
     save_video = True
     drone_ops = DroneUtils(tello, in_flight)
-    # start video streaming 
+    # start video streaming 0
     tello.streamon()
     
     # get better real-time performance
     tello.set_video_fps(tello.FPS_30)
-    tello.set_video_resolution(tello.RESOLUTION_480P)
-    tello.set_video_bitrate(tello.BITRATE_2MBPS)
+    tello.set_video_resolution(tello.RESOLUTION_720P)
+    tello.set_video_bitrate(tello.BITRATE_3MBPS)
     
     # multi-threading
     app = QApplication(sys.argv)
