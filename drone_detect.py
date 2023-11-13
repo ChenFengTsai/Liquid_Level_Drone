@@ -34,7 +34,7 @@ TELLO_IP = config.get('tello', 'ip')
 # Paths (change these paths as per your system)
 exp = "exp_500"
 root_path =  "/Users/richtsai1103/liquid_level_drone"
-weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best.pt")
+weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best_small.pt")
 model_path = os.path.join(root_path, "yolov5/")
 
 # ACTIONS TO COMMANDS MAPPING
@@ -178,9 +178,11 @@ class CameraViewer(QMainWindow):
         self.timer.start(1)  # Update every 1 milliseconds (adjust as needed)
         
         self.last_center_time = time.time()
+        self.last_report_time = time.time()
 
         
     def update_frame(self):
+        start_time = time.time()
         frame_original = self.frame_read.frame
 
         # Crop the image to make it more focued on smaller portion of the frame
@@ -190,20 +192,44 @@ class CameraViewer(QMainWindow):
         crop_y1 = height // 4
         crop_y2 = 3 * height // 4
         cropped_image = frame_original[crop_y1:crop_y2, crop_x1:crop_x2]
-
+        cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2BGR)
+        
         # Resize for faster processing 
         # todo: (keep the same 640 since we trained on 640 or train model in 320)
-        frame_resized = cv2.resize(cropped_image, (320, 320))
+        # frame_resized = cv2.resize(cropped_image, (320, 320))
         
-        # YOLO processing on low-res frame
-        results = model(frame_resized)
+        # Set confidence level
+        model.conf = 0.35 
+        results = model(cropped_image)
         self.rendered_frame_small = results.render()[0]
+        elapsed_time = time.time() - start_time
+        print(f"Inference time: {elapsed_time} seconds")
+        time_ls.append(elapsed_time)
         
-        # todo: navigation start here
+        ### Reporting Section
+        report_interval = 8
+        if time.time() - self.last_report_time > report_interval:
+            if not len(results.pred[0]):
+                print('Nothing Detected')
+            for detection in results.pred[0]:
+                x1, y1, x2, y2, conf, class_id = map(float, detection)
+                label = results.names[int(class_id)]
+                print(f"Detected: {label}, Confidence: {conf:.2f}")
+                
+            self.last_report_time = time.time()
+            print("-------------------")
+
+        if drone_control_kb['navigation']:
+            for detection in results.pred[0]:
+                x1, y1, x2, y2, conf, class_id = map(float, detection)
+                label = results.names[int(class_id)]
+                drone_ops.p_current.append(label)
+            
+            
+        ### Centering Section
         # Calculate the center of the bounding box if any object is detected
         self.make_center = drone_ops.make_center
-        
-        center_interval = 5
+        center_interval = 4
 
         try:
             if drone_control_kb['navigation'] \
@@ -212,7 +238,8 @@ class CameraViewer(QMainWindow):
                     or drone_ops.center_times == 0):
                 print('\nStart Centering')
                 print(f'Centering times: {drone_ops.center_times}')
-                print(time.time() - self.last_center_time)
+                # print(time.time() - self.last_center_time)
+                
                 drone_ops.center(results.pred[0][:4][0])
                 self.last_center_time = time.time()
                 drone_ops.center_times += 1
@@ -220,10 +247,9 @@ class CameraViewer(QMainWindow):
         except Exception:
             pass
 
-            
         # Resize the rendered frame to a larger resolution for display
-        rendered_frame_large = cv2.resize(self.rendered_frame_small, (640, 640)) 
-        
+        rendered_frame_large = cv2.resize(self.rendered_frame_small, (480, 360)) 
+        rendered_frame_large = cv2.cvtColor(rendered_frame_large, cv2.COLOR_BGR2RGB)
         # Save the frame to the video file (if video recording is enabled)
         if self.save_video:
             self.out.write(rendered_frame_large)
@@ -297,6 +323,11 @@ def handle_key_press(key, drone_control_kb):
             drone_control_kb['move'] = 'rotate_counter_clockwise'
         elif key.char == 'z':
             drone_control_kb['navigation'] = True
+        ### This command is used to save out the inference time
+        elif key.char == 't':
+            t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            np.savetxt(f'exp_result/{exp}/inference_time_{t}.txt', time_ls)
+            
     except AttributeError:
         if key == keyboard.Key.space:
             drone_control_kb['takeoff'] = True
@@ -304,143 +335,9 @@ def handle_key_press(key, drone_control_kb):
             drone_control_kb['land'] = True
 
     print(drone_control_kb)  # Print the updated drone control commands
-        
-       
-# todo: multiprocessing for model inference (too slow probably because of the queue)
-# def get_video_stream(model, tello, save=False):
-#     try:
-#         print("Attempting to start the Tello camera feed...")
-#         frame_read = tello.get_frame_read()
-
-#         if not frame_read:
-#             print("Failed to get Tello frame read. Exiting.")
-#             return
-#     except Exception as e:
-#         print(f"Error starting the video feed: {e}")
-        
-#     # Queue
-#     Frames_data = multiprocessing.Queue()
-#     Predicted_frame = multiprocessing.Queue()
-#     #Predicted_class = multiprocessing.Queue()
-#     #Processing_times = multiprocessing.Queue()
-#     # Processed_frames = multiprocessing.Queue()
-    
-#     # Initialize Process
-#     inference_process = multiprocessing.Process(target=(yolo_inference), 
-#                                                 args=(model, Frames_data, Predicted_frame))
-#     image_postprocess_process = multiprocessing.Process(target=(image_postprocess), 
-#                                                         args=(Predicted_frame,))
-#     # show_image_process =  multiprocessing.Process(target=(show_image), args=(Processed_frames, save))
-#     # record_result_process =  multiprocessing.Process(target=(record_result), args=(Predicted_frame,))
-    
-#     # start process
-#     inference_process.start()
-#     image_postprocess_process.start()
-#     #show_image_process.start()
-#     #record_result_process.start()
-    
-#     # image preprocess
-#     while True:
-#         # Original high-resolution frame
-#         frame_original = frame_read.frame
-        
-#         # crop the image to focus on middle portion
-#         height, width, _ = frame_original.shape
-#         crop_x1 = width // 4  # Adjust the cropping region as needed
-#         crop_x2 = 3 * width // 4
-#         crop_y1 = height // 4
-#         crop_y2 = 3 * height // 4
-#         cropped_image = frame_original[crop_y1:crop_y2, crop_x1:crop_x2]
-        
-#         # change bgr to rgb
-#         frame_rgb = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
-#         # resize for faster operation in the model
-#         frame_resized = cv2.resize(frame_rgb, (320, 320))
-#         # put processed frame into the queue
-#         Frames_data.put(frame_resized)
-        
-
-
-# def yolo_inference(model, Frames_data, Predicted_frame):
-#     while True:
-#         frame_d = Frames_data.get()
-
-#         #Processing_times.put(time.time())
-#         # model inference
-#         results = model(frame_d)
-#         # render prediction to image frame 
-#         render_img = results.render()[0]
-
-#         # put prediction in to the queue
-#         Predicted_frame.put(render_img)
-
-# def image_postprocess(Predicted_frame):
-#     times = []
-#     while True:
-#         predicted_d = Predicted_frame.get()
-           
-#         # resize it to larger screen
-#         rendered_frame_large = cv2.resize(predicted_d, (640, 640))
-        
-#         # record processing time
-#         # times.append(time.time()-Processing_times.get())
-#         # times = times[-20:]
-#         # ms = sum(times)/len(times)*1000
-#         # fps = 1000 / ms
-#         # rendered_frame_large = cv2.putText(rendered_frame_large, "Time: {:.1f}FPS".format(fps), (0, 30), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
-#         cv2.imshow('output', rendered_frame_large)
-#         if cv2.waitKey(25) & 0xFF == ord("q"):
-#             cv2.destroyAllWindows()
-#             print("Tello camera feed ended.")
-#             break
-#             # put the processed image frame to queue
-#             #Processed_frames.put(rendered_frame_large)
     
     
-# def show_image(Processed_frames, save):
-#     final_frames = []
-#     while True:
-#         processed_frame = Processed_frames.get()
-#         if processed_frame.any():
-#             # save it 
-#             final_frames.append(processed_frame)
-#             cv2.imshow('output', processed_frame)
-#             if cv2.waitKey(25) & 0xFF == ord("q"):
-#                 cv2.destroyAllWindows()
-#                 print("Tello camera feed ended.")
-#                 break
-#     # save images to video
-#     if save:
-#         fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for AVI format
-#         fps = 30.0  # Frames per second
-#         video_width = 640  # Width of the output video frame
-#         video_height = 640  # Height of the output video frame
-#         out = cv2.VideoWriter('output_video.avi', fourcc, fps, (video_width, video_height))
-#         for frame in final_frames:
-#             out.write(frame)
-#         out.release()  # Release the output video file
-
-
-# def record_result(Predicted_class):
-#     # If it's time to report detections
-#     report_interval = 10
-#     last_report_time = time.time()
-#     class_id = ['empty', 'half', 'full']
-#     while True:
-#         preds = Predicted_class.get()
-#         if preds.any():
-#             if time.time() - last_report_time > report_interval:
-#                 for detection in preds:
-#                     print(detection)
-#                     x1, y1, x2, y2, conf, class_id = map(float, detection)
-#                     label = class_id[int(class_id)]
-#                 print(f"Detected: {label}, Confidence: {conf:.2f}")
-#                 # Reset the report timer after reporting
-#                 last_report_time = time.time()
-#                 print("-------")
-
-
-
+    
 #########################
 # MAIN LOOP - Execute the script!
 #########################
@@ -464,16 +361,18 @@ if __name__ == "__main__":
 
     # Assuming you initialize drone_state as 'landed' or 'flying' elsewhere in your script
     in_flight = False
-    mock = False
+    mock = True
     control_with_kb = True
-    save_video = True
+    save_video = False
+    time_ls = []
+    
     drone_ops = DroneUtils(tello, in_flight)
     # start video streaming 
     tello.streamon()
     
     # get better real-time performance
     tello.set_video_fps(tello.FPS_30)
-    tello.set_video_resolution(tello.RESOLUTION_720P)
+    tello.set_video_resolution(tello.RESOLUTION_480P)
     tello.set_video_bitrate(tello.BITRATE_4MBPS)
     
     # multi-threading
@@ -501,10 +400,6 @@ if __name__ == "__main__":
     
     # Start the PyQt application
     sys.exit(app.exec_())
-
-    
-    # multipreocess for inference stage
-    #get_video_stream(model, tello) 
     
     # todo: fix state udp
     # stats = drone_ops.get_drone_status(tello)

@@ -118,9 +118,11 @@ def start_video_feed(model):
             # If YOLO processing is needed:
             # flip it
             frame = cv2.flip(frame, 1)
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = model(frame)
             rendered_frame = results.render()[0]
+            rendered_frame = cv2.cvtColor(rendered_frame, cv2.COLOR_BGR2RGB)
             cv2.imshow('YOLOv5', rendered_frame)
             
             if cv2.waitKey(1) == ord('q'):

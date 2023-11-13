@@ -1,6 +1,7 @@
 import configparser
 from djitellopy import Tello
 import time
+from collections import Counter
 
 class DroneUtils:
     def __init__(self, tello, in_flight):
@@ -8,6 +9,9 @@ class DroneUtils:
         self.in_flight = in_flight
         self.make_center = False
         self.center_times = 0
+        self.p_current = []
+        self.pred_ls = []
+        self.pred_res = {}
         
     def execute_drone_command(self, command):
         dist = 20
@@ -52,7 +56,15 @@ class DroneUtils:
             self.tello.go_xyz_speed(x, y, z, speed)
         elif command == 'navigation':
             self.zigzag_movement()
-             
+            
+            # final result reporting
+            for i in range(len(self.pred_ls)):
+                cts = Counter(self.pred_ls[i])
+                print(f'Predictions for item {i}: ', cts)
+                most_common = cts.most_common(1)[0][0]
+                self.pred_res[i] = most_common
+            print('\nFinal Report: ', self.pred_res)
+            
         elif command == "status":
             stats = self.get_drone_status(self.tello)
             print(stats)
@@ -73,21 +85,23 @@ class DroneUtils:
                 self.tello.move_left(segment_distance)
             else: 
                 self.tello.move_right(segment_distance)
-            self.center_times = 0
                 
-            # todo: start centering
+            self.center_times = 0
             self.make_center = True
             # 10 seconds for centering, change it if needed
             time.sleep(wait_time)
+            self.pred_ls.append(self.p_current)
+            self.p_current = []
             
-        # end centering and start moving
-        self.make_center = False
+            # end centering and start moving
+            self.make_center = False
             
 
     def zigzag_movement(self, patterns=3, distance=40, height=40, segments=1, wait_time=10):
         directions = ["left", "right", "left"]  # Starting from bottom right, as specified
         for i in range(patterns):
             self.lawnmower_pattern(distance=distance, segments=segments, direction=directions[i])
+            
             if i < patterns - 1:  # Don't move up after the last pattern
                 self.tello.move_up(height)
                 time.sleep(wait_time)
@@ -134,17 +148,20 @@ class DroneUtils:
                 # Move up
                 self.execute_drone_command('move_up')
                 print('Centering: Move Up')
-        
-        if distance < distance_threshold[0]:
-            # Move forward
-            self.execute_drone_command('move_forward')
-            print('Centering: Move Forward')
-            
-        elif distance > distance_threshold[1]:
-            # Move back
-            self.execute_drone_command('move_back')
-            print('Centering: Move Back')
-            
+                
+        # move forward and backward when the bbox is not at the corner (means mistake)
+        # todo: tune the threshold
+        if not (abs(bbox[2]-bbox[0]) < 50) or (abs(bbox[3]-bbox[1]<50)):
+            if distance < distance_threshold[0]:
+                # Move forward
+                self.execute_drone_command('move_forward')
+                print('Centering: Move Forward')
+                
+            elif distance > distance_threshold[1]:
+                # Move back
+                self.execute_drone_command('move_back')
+                print('Centering: Move Back')
+                
         if abs(delta_x) <= threshold \
             and abs(delta_y) <= threshold \
                 and distance_threshold[0] <= distance <= distance_threshold[1]:
