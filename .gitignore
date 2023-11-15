@@ -1,6 +1,7 @@
 /dataset/
 config.ini
 /video_result/
+/exp_result/
 
 test.py
 __pycache__/
