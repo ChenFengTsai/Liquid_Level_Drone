@@ -34,7 +34,7 @@ TELLO_IP = config.get('tello', 'ip')
 # Paths (change these paths as per your system)
 exp = "exp_500"
 root_path =  "/Users/richtsai1103/liquid_level_drone"
-weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best_small.pt")
+weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best_medium.pt")
 model_path = os.path.join(root_path, "yolov5/")
 
 # ACTIONS TO COMMANDS MAPPING
@@ -199,12 +199,11 @@ class CameraViewer(QMainWindow):
         frame_resized = cv2.resize(cropped_image, (320, 320))
         
         # Set confidence level
-        model.conf = 0.5
+        model.conf = 0.4
         results = model(frame_resized)
         self.rendered_frame_small = results.render()[0]
         elapsed_time = time.time() - start_time
-        # print(f"Inference time: {elapsed_time} seconds")
-        # time_ls.append(elapsed_time)
+
         
         ### Reporting Section
         report_interval = 8
@@ -328,6 +327,8 @@ def handle_key_press(key, drone_control_kb):
             if drone_control_kb['navigation'] == False:
                 t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 # save out result to json
+                if not os.path.exists(f"exp_result/{exp}"):
+                    os.mkdir(f"exp_result/{exp}")
                 with open(f"exp_result/{exp}/res_{t}.json", "w") as json_file:
                     json.dump(drone_ops.all_res, json_file)
             

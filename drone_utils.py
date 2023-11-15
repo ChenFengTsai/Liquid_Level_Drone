@@ -60,11 +60,16 @@ class DroneUtils:
             self.zigzag_movement()
             
             # final result reporting
+            print("\nDetect objects: ", len(self.pred_ls))
             for i in range(len(self.pred_ls)):
                 labels = [label for label, conf, e_time in self.pred_ls[i]]
                 cts = Counter(labels)
                 print(f'Predictions for item {i}: ', cts)
-                most_common = cts.most_common(1)[0][0]
+                if not cts:
+                    most_common = 'Nothing'
+                else:
+                    most_common = cts.most_common(1)[0][0]
+                    
                 self.pred_res[i] = most_common
                 self.all_res[i] = self.pred_ls[i]
             print('\nFinal Report: ', self.pred_res)
@@ -93,8 +98,9 @@ class DroneUtils:
                 
             self.center_times = 0
             self.make_center = True
-            # 10 seconds for centering, change it if needed
+            # 10 seconds for centering and detecting, change it if needed
             time.sleep(wait_time)
+            
             self.pred_ls.append(self.p_current)
             self.p_current = []
             
@@ -102,14 +108,22 @@ class DroneUtils:
             self.make_center = False
             
 
-    def zigzag_movement(self, patterns=3, distance=40, height=50, segments=1, wait_time=10):
+    def zigzag_movement(self, patterns=2, distance=40, height=50, segments=1, wait_time=10):
         directions = ["left", "right", "left"]  # Starting from bottom right, as specified
         for i in range(patterns):
             self.lawnmower_pattern(distance=distance, segments=segments, direction=directions[i])
             
             if i < patterns - 1:  # Don't move up after the last pattern
                 self.tello.move_up(height)
+                # 10 seconds for centering and detecting, change it if needed
                 time.sleep(wait_time)
+                
+                self.pred_ls.append(self.p_current)
+                self.p_current = []
+                
+                
+                
+                
                 
     def center(self, bbox):
         center_x = (bbox[0] + bbox[2]) / 2
@@ -156,16 +170,17 @@ class DroneUtils:
                 
         # move forward and backward when the bbox is not at the corner (means mistake)
         # todo: tune the threshold
-        if not (abs(bbox[2]-bbox[0]) < 50) or (abs(bbox[3]-bbox[1]<50)):
-            if distance < distance_threshold[0]:
-                # Move forward
-                self.execute_drone_command('move_forward')
-                print('Centering: Move Forward')
-                
-            elif distance > distance_threshold[1]:
-                # Move back
-                self.execute_drone_command('move_back')
-                print('Centering: Move Back')
+        
+        #if not (abs(bbox[2]-bbox[0]) < 50) or (abs(bbox[3]-bbox[1]<50)):
+        if distance < distance_threshold[0]:
+            # Move forward
+            self.execute_drone_command('move_forward')
+            print('Centering: Move Forward')
+            
+        elif distance > distance_threshold[1]:
+            # Move back
+            self.execute_drone_command('move_back')
+            print('Centering: Move Back')
                 
         if abs(delta_x) <= threshold \
             and abs(delta_y) <= threshold \
