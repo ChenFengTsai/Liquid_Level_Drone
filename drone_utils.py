@@ -125,13 +125,13 @@ class DroneUtils:
                 
                 
                 
-    def center(self, bbox):
+    def center(self, bbox, img_size):
         center_x = (bbox[0] + bbox[2]) / 2
         center_y = (bbox[1] + bbox[3]) / 2
 
         # Calculate the desired center within your frame
-        desired_center_x = 320 / 2  # Half of the frame width
-        desired_center_y = 320 / 2  # Half of the frame height
+        desired_center_x = img_size / 2  # Half of the frame width
+        desired_center_y = img_size / 2  # Half of the frame height
 
         # Calculate the direction and distance to move the drone
         delta_x = center_x - desired_center_x
@@ -143,8 +143,9 @@ class DroneUtils:
 
         
         # adjust the threshold for drone movement
+        ### Remember it is 320 now
         threshold = 80
-        distance_threshold = (180, 420)
+        distance_threshold = (120, 420)
 
         # Send control commands to the drone based on the delta values
         if abs(delta_x) > threshold:

@@ -196,7 +196,8 @@ class CameraViewer(QMainWindow):
         
         # Resize for faster processing 
         # todo: (keep the same 640 since we trained on 640 or train model in 320)
-        frame_resized = cv2.resize(cropped_image, (640, 640))
+        img_size = 320
+        frame_resized = cv2.resize(cropped_image, (img_size, img_size))
         
         # Set confidence level
         model.conf = 0.5
@@ -239,7 +240,7 @@ class CameraViewer(QMainWindow):
                 print(f'Centering times: {drone_ops.center_times}')
                 # print(time.time() - self.last_center_time)
                 
-                drone_ops.center(results.pred[0][:4][0])
+                drone_ops.center(results.pred[0][:4][0], img_size)
                 self.last_center_time = time.time()
                 drone_ops.center_times += 1
                 
