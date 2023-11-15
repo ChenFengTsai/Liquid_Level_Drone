@@ -196,11 +196,11 @@ class CameraViewer(QMainWindow):
         
         # Resize for faster processing 
         # todo: (keep the same 640 since we trained on 640 or train model in 320)
-        # frame_resized = cv2.resize(cropped_image, (320, 320))
+        frame_resized = cv2.resize(cropped_image, (320, 320))
         
         # Set confidence level
-        model.conf = 0.35 
-        results = model(cropped_image)
+        model.conf = 0.5
+        results = model(frame_resized)
         self.rendered_frame_small = results.render()[0]
         elapsed_time = time.time() - start_time
         # print(f"Inference time: {elapsed_time} seconds")
@@ -229,7 +229,7 @@ class CameraViewer(QMainWindow):
         ### Centering Section
         # Calculate the center of the bounding box if any object is detected
         self.make_center = drone_ops.make_center
-        center_interval = 4
+        center_interval = 5
 
         try:
             if drone_control_kb['navigation'] \
@@ -248,7 +248,7 @@ class CameraViewer(QMainWindow):
             pass
 
         # Resize the rendered frame to a larger resolution for display
-        rendered_frame_large = cv2.resize(self.rendered_frame_small, (480, 360)) 
+        rendered_frame_large = cv2.resize(self.rendered_frame_small, (640, 480)) 
         rendered_frame_large = cv2.cvtColor(rendered_frame_large, cv2.COLOR_BGR2RGB)
         # Save the frame to the video file (if video recording is enabled)
         if self.save_video:
@@ -364,7 +364,7 @@ if __name__ == "__main__":
 
     # Assuming you initialize drone_state as 'landed' or 'flying' elsewhere in your script
     in_flight = False
-    mock = True
+    mock = False
     control_with_kb = True
     save_video = False
     time_ls = []

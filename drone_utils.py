@@ -102,7 +102,7 @@ class DroneUtils:
             self.make_center = False
             
 
-    def zigzag_movement(self, patterns=3, distance=40, height=40, segments=1, wait_time=10):
+    def zigzag_movement(self, patterns=3, distance=40, height=50, segments=1, wait_time=10):
         directions = ["left", "right", "left"]  # Starting from bottom right, as specified
         for i in range(patterns):
             self.lawnmower_pattern(distance=distance, segments=segments, direction=directions[i])
