@@ -2,6 +2,7 @@ import configparser
 from djitellopy import Tello
 import time
 from collections import Counter
+import json
 
 class DroneUtils:
     def __init__(self, tello, in_flight):
@@ -12,6 +13,7 @@ class DroneUtils:
         self.p_current = []
         self.pred_ls = []
         self.pred_res = {}
+        self.all_res = {}
         
     def execute_drone_command(self, command):
         dist = 20
@@ -59,11 +61,14 @@ class DroneUtils:
             
             # final result reporting
             for i in range(len(self.pred_ls)):
-                cts = Counter(self.pred_ls[i])
+                labels = [label for label, conf, e_time in self.pred_ls[i]]
+                cts = Counter(labels)
                 print(f'Predictions for item {i}: ', cts)
                 most_common = cts.most_common(1)[0][0]
                 self.pred_res[i] = most_common
+                self.all_res[i] = self.pred_ls[i]
             print('\nFinal Report: ', self.pred_res)
+
             
         elif command == "status":
             stats = self.get_drone_status(self.tello)

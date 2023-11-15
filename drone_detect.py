@@ -5,7 +5,6 @@ from djitellopy import Tello
 #import azure.cognitiveservices.speech as speechsdk
 from pynput import keyboard
 import threading
-# import multiprocessing
 import time
 import datetime
 from drone_utils import DroneUtils
@@ -13,6 +12,7 @@ import configparser
 import os
 import speech_recognition as sr
 import numpy as np
+import json
 
 import sys
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
@@ -203,8 +203,8 @@ class CameraViewer(QMainWindow):
         results = model(cropped_image)
         self.rendered_frame_small = results.render()[0]
         elapsed_time = time.time() - start_time
-        print(f"Inference time: {elapsed_time} seconds")
-        time_ls.append(elapsed_time)
+        # print(f"Inference time: {elapsed_time} seconds")
+        # time_ls.append(elapsed_time)
         
         ### Reporting Section
         report_interval = 8
@@ -223,7 +223,7 @@ class CameraViewer(QMainWindow):
             for detection in results.pred[0]:
                 x1, y1, x2, y2, conf, class_id = map(float, detection)
                 label = results.names[int(class_id)]
-                drone_ops.p_current.append(label)
+                drone_ops.p_current.append((label, conf, elapsed_time))
             
             
         ### Centering Section
@@ -323,10 +323,13 @@ def handle_key_press(key, drone_control_kb):
             drone_control_kb['move'] = 'rotate_counter_clockwise'
         elif key.char == 'z':
             drone_control_kb['navigation'] = True
-        ### This command is used to save out the inference time
+        ### This command is used to save out the experiment result after navigation
         elif key.char == 't':
-            t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            np.savetxt(f'exp_result/{exp}/inference_time_{t}.txt', time_ls)
+            if drone_control_kb['navigation'] == False:
+                t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                # save out result to json
+                with open(f"exp_result/{exp}/res_{t}.json", "w") as json_file:
+                    json.dump(drone_ops.all_res, json_file)
             
     except AttributeError:
         if key == keyboard.Key.space:
