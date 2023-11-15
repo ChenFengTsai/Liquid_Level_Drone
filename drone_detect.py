@@ -34,7 +34,7 @@ TELLO_IP = config.get('tello', 'ip')
 # Paths (change these paths as per your system)
 exp = "exp_500"
 root_path =  "/Users/richtsai1103/liquid_level_drone"
-weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best_medium.pt")
+weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best_small.pt")
 model_path = os.path.join(root_path, "yolov5/")
 
 # ACTIONS TO COMMANDS MAPPING
@@ -196,10 +196,10 @@ class CameraViewer(QMainWindow):
         
         # Resize for faster processing 
         # todo: (keep the same 640 since we trained on 640 or train model in 320)
-        frame_resized = cv2.resize(cropped_image, (320, 320))
+        frame_resized = cv2.resize(cropped_image, (640, 640))
         
         # Set confidence level
-        model.conf = 0.4
+        model.conf = 0.5
         results = model(frame_resized)
         self.rendered_frame_small = results.render()[0]
         elapsed_time = time.time() - start_time

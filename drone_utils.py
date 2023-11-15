@@ -138,12 +138,13 @@ class DroneUtils:
         print(f'Object away from center: {delta_x}_x')
         delta_y = center_y - desired_center_y
         print(f'Object away from center: {delta_y}_y')
-        distance = ((bbox[0]-bbox[2])**2 + (bbox[1]+bbox[3])**2)**0.5
+        distance = ((bbox[0]-bbox[2])**2 + (bbox[1]-bbox[3])**2)**0.5
         print(f'Box size: {distance}')
 
+        
         # adjust the threshold for drone movement
         threshold = 80
-        distance_threshold = (220, 480)
+        distance_threshold = (180, 420)
 
         # Send control commands to the drone based on the delta values
         if abs(delta_x) > threshold:
