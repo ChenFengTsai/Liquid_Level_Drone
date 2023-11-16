@@ -366,7 +366,7 @@ if __name__ == "__main__":
 
     # Assuming you initialize drone_state as 'landed' or 'flying' elsewhere in your script
     in_flight = False
-    mock = True
+    mock = False
     control_with_kb = True
     save_video = False
     time_ls = []
