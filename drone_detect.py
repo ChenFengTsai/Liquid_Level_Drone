@@ -196,11 +196,10 @@ class CameraViewer(QMainWindow):
         cropped_image = frame_original[crop_y1+20:crop_y2-20, crop_x1:crop_x2]
         cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
 
-        # todo: change brightness and contrast
-        contrast_factor = 1.2  # You can adjust this factor to control contrast
-        brightness_factor = 1.4  # You can adjust this factor to control brightness
-
-        cropped_image = cv2.convertScaleAbs(cropped_image, alpha=contrast_factor, beta=brightness_factor)
+        # todo: change brightness
+        # Increase or decrease brightness by adjusting pixel values
+        brightness_factor = 1.5  # You can adjust this factor to control brightness
+        cropped_image = np.clip(cropped_image * brightness_factor, 0, 255).astype(np.uint8)
         
         
         # Resize for faster processing 
