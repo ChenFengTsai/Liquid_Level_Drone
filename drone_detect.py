@@ -34,7 +34,7 @@ TELLO_IP = config.get('tello', 'ip')
 # Paths (change these paths as per your system)
 exp = "exp_500"
 root_path =  "/Users/richtsai1103/liquid_level_drone"
-weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best_small.pt")
+weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best_small640.pt")
 model_path = os.path.join(root_path, "yolov5/")
 
 # ACTIONS TO COMMANDS MAPPING
@@ -173,6 +173,8 @@ class CameraViewer(QMainWindow):
         self.layout.addWidget(self.label)
 
         self.frame_read = tello.get_frame_read()  # Open the default camera (usually index 0)
+        # buffer
+        time.sleep(2)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
         self.timer.start(1)  # Update every 1 milliseconds (adjust as needed)
@@ -191,16 +193,23 @@ class CameraViewer(QMainWindow):
         crop_x2 = 3 * width // 4
         crop_y1 = height // 4
         crop_y2 = 3 * height // 4
-        cropped_image = frame_original[crop_y1:crop_y2, crop_x1:crop_x2]
-        cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2BGR)
+        cropped_image = frame_original[crop_y1+20:crop_y2-20, crop_x1:crop_x2]
+        cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
+
+        # todo: change brightness and contrast
+        contrast_factor = 1.2  # You can adjust this factor to control contrast
+        brightness_factor = 1.4  # You can adjust this factor to control brightness
+
+        cropped_image = cv2.convertScaleAbs(cropped_image, alpha=contrast_factor, beta=brightness_factor)
+        
         
         # Resize for faster processing 
         # todo: (keep the same 640 since we trained on 640 or train model in 320)
-        img_size = 320
+        img_size = 640
         frame_resized = cv2.resize(cropped_image, (img_size, img_size))
         
         # Set confidence level
-        model.conf = 0.5
+        model.conf = 0.2
         results = model(frame_resized)
         self.rendered_frame_small = results.render()[0]
         elapsed_time = time.time() - start_time
@@ -238,8 +247,8 @@ class CameraViewer(QMainWindow):
                     or drone_ops.center_times == 0):
                 print('\nStart Centering')
                 print(f'Centering times: {drone_ops.center_times}')
-                # print(time.time() - self.last_center_time)
-                if drone_ops.center_times == 0 and time.time() - drone_ops.moving_start > 3:
+
+                if drone_ops.center_times == 0 and time.time() - drone_ops.moving_start > 2:
                     drone_ops.center(results.pred[0][:4][0], img_size)
                     self.last_center_time = time.time()
                     drone_ops.center_times += 1
@@ -248,8 +257,8 @@ class CameraViewer(QMainWindow):
             pass
 
         # Resize the rendered frame to a larger resolution for display
-        rendered_frame_large = cv2.resize(self.rendered_frame_small, (640, 480)) 
-        rendered_frame_large = cv2.cvtColor(rendered_frame_large, cv2.COLOR_BGR2RGB)
+        rendered_frame_large = cv2.resize(self.rendered_frame_small, (720, 480)) 
+        # rendered_frame_large = cv2.cvtColor(rendered_frame_large, cv2.COLOR_RGB2BGR)
         # Save the frame to the video file (if video recording is enabled)
         if self.save_video:
             self.out.write(rendered_frame_large)
@@ -257,7 +266,7 @@ class CameraViewer(QMainWindow):
         # render to QImage (since cv2 will block keyboard control)
         rendered_height, rendered_width, _ = rendered_frame_large.shape 
         bytes_per_line = 3 * rendered_width
-        q_image = QImage(rendered_frame_large, rendered_width, rendered_height, bytes_per_line, QImage.Format_RGB888)
+        q_image = QImage(rendered_frame_large, rendered_width, rendered_height, bytes_per_line, QImage.Format_BGR888)
 
         # Display the QImage in the QLabel
         self.label.setPixmap(QPixmap.fromImage(q_image))
@@ -366,7 +375,7 @@ if __name__ == "__main__":
 
     # Assuming you initialize drone_state as 'landed' or 'flying' elsewhere in your script
     in_flight = False
-    mock = False
+    mock = True
     control_with_kb = True
     save_video = False
     time_ls = []
