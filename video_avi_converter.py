@@ -33,7 +33,7 @@ def convert_avi_to_mp4(input_video, output_video, experiment):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         # Write the processed frame to the output MP4 file (in this case, it repeats each frame 10 times)
-        for _ in range(10):
+        for _ in range(7):
             out.write(frame)
 
     # Release the video objects
