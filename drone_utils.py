@@ -96,6 +96,7 @@ class DroneUtils:
             else: 
                 self.tello.move_right(segment_distance)
                 
+            self.moving_start = time.time()
             self.center_times = 0
             self.make_center = True
             # 10 seconds for centering and detecting, change it if needed
@@ -108,21 +109,23 @@ class DroneUtils:
             self.make_center = False
             
 
-    def zigzag_movement(self, patterns=4, distance=40, height=50, segments=1, wait_time=10):
+    def zigzag_movement(self, patterns=4, distance=40, height=43, segments=1, wait_time=10):
         directions = ["left", "right", "left", "right"]  # Starting from bottom right, as specified
         for i in range(patterns):
             self.lawnmower_pattern(distance=distance, segments=segments, direction=directions[i])
             
             if i < patterns - 1:  # Don't move up after the last pattern
                 self.tello.move_up(height)
+                
+                self.moving_start = time.time()
+                self.center_times = 0
+                self.make_center = True
                 # 10 seconds for centering and detecting, change it if needed
                 time.sleep(wait_time)
                 
                 self.pred_ls.append(self.p_current)
-                self.p_current = []
-                
-                
-                
+                self.p_current = []  
+                self.make_center = False 
                 
                 
     def center(self, bbox, img_size):
@@ -145,7 +148,7 @@ class DroneUtils:
         # adjust the threshold for drone movement
         ### Remember it is 320 now
         threshold = img_size//4
-        distance_threshold = (img_size/3.2, img_size/0.75)
+        distance_threshold = (img_size/2.7, img_size/0.75)
 
         # Send control commands to the drone based on the delta values
         if abs(delta_x) > threshold:
@@ -173,16 +176,16 @@ class DroneUtils:
         # move forward and backward when the bbox is not at the corner (means mistake)
         # todo: tune the threshold
         
-        #if not (abs(bbox[2]-bbox[0]) < 50) or (abs(bbox[3]-bbox[1]<50)):
-        if distance < distance_threshold[0]:
-            # Move forward
-            self.execute_drone_command('move_forward')
-            print('Centering: Move Forward')
-            
-        elif distance > distance_threshold[1]:
-            # Move back
-            self.execute_drone_command('move_back')
-            print('Centering: Move Back')
+        if not (bbox[0]<20) or (bbox[1]<20) or bbox[2]>300 or bbox[3]>300:
+            if distance < distance_threshold[0]:
+                # Move forward
+                self.execute_drone_command('move_forward')
+                print('Centering: Move Forward')
+                
+            elif distance > distance_threshold[1]:
+                # Move back
+                self.execute_drone_command('move_back')
+                print('Centering: Move Back')
                 
         if abs(delta_x) <= threshold \
             and abs(delta_y) <= threshold \

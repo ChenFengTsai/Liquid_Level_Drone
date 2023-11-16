@@ -229,7 +229,7 @@ class CameraViewer(QMainWindow):
         ### Centering Section
         # Calculate the center of the bounding box if any object is detected
         self.make_center = drone_ops.make_center
-        center_interval = 5
+        center_interval = 4
 
         try:
             if drone_control_kb['navigation'] \
@@ -239,10 +239,10 @@ class CameraViewer(QMainWindow):
                 print('\nStart Centering')
                 print(f'Centering times: {drone_ops.center_times}')
                 # print(time.time() - self.last_center_time)
-                
-                drone_ops.center(results.pred[0][:4][0], img_size)
-                self.last_center_time = time.time()
-                drone_ops.center_times += 1
+                if drone_ops.center_times == 0 and time.time() - drone_ops.moving_start > 3:
+                    drone_ops.center(results.pred[0][:4][0], img_size)
+                    self.last_center_time = time.time()
+                    drone_ops.center_times += 1
                 
         except Exception:
             pass
@@ -366,7 +366,7 @@ if __name__ == "__main__":
 
     # Assuming you initialize drone_state as 'landed' or 'flying' elsewhere in your script
     in_flight = False
-    mock = False
+    mock = True
     control_with_kb = True
     save_video = False
     time_ls = []
