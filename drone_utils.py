@@ -145,7 +145,7 @@ class DroneUtils:
         # adjust the threshold for drone movement
         ### Remember it is 320 now
         threshold = 80
-        distance_threshold = (120, 420)
+        distance_threshold = (100, 420)
 
         # Send control commands to the drone based on the delta values
         if abs(delta_x) > threshold:
