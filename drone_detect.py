@@ -198,7 +198,7 @@ class CameraViewer(QMainWindow):
 
         # todo: change brightness
         # Increase or decrease brightness by adjusting pixel values
-        brightness_factor = 1.4  # You can adjust this factor to control brightness
+        brightness_factor = 1.45  # You can adjust this factor to control brightness
         cropped_image = np.clip(cropped_image * brightness_factor, 0, 255).astype(np.uint8)
         
         
@@ -385,7 +385,7 @@ if __name__ == "__main__":
     
     # get better real-time performance
     tello.set_video_fps(tello.FPS_30)
-    tello.set_video_resolution(tello.RESOLUTION_480P)
+    tello.set_video_resolution(tello.RESOLUTION_720P)
     tello.set_video_bitrate(tello.BITRATE_4MBPS)
     
     # multi-threading

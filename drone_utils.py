@@ -109,7 +109,7 @@ class DroneUtils:
             self.make_center = False
             
 
-    def zigzag_movement(self, patterns=4, distance=40, height=43, segments=1, wait_time=10):
+    def zigzag_movement(self, patterns=4, distance=40, height=45, segments=1, wait_time=10):
         directions = ["left", "right", "left", "right"]  # Starting from bottom right, as specified
         for i in range(patterns):
             self.lawnmower_pattern(distance=distance, segments=segments, direction=directions[i])
@@ -148,7 +148,7 @@ class DroneUtils:
         # adjust the threshold for drone movement
         ### Remember it is 320 now
         threshold = img_size//4
-        distance_threshold = (img_size/2.5, img_size/0.75)
+        distance_threshold = (img_size/2.65, img_size/0.75)
 
         # Send control commands to the drone based on the delta values
         if abs(delta_x) > threshold:
