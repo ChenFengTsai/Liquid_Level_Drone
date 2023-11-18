@@ -148,7 +148,7 @@ class DroneUtils:
         # adjust the threshold for drone movement
         ### Remember it is 320 now
         threshold = img_size//4
-        distance_threshold = (img_size/2.7, img_size/0.75)
+        distance_threshold = (img_size/2.5, img_size/0.75)
 
         # Send control commands to the drone based on the delta values
         if abs(delta_x) > threshold:

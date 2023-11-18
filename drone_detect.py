@@ -194,11 +194,11 @@ class CameraViewer(QMainWindow):
         crop_y1 = height // 4
         crop_y2 = 3 * height // 4
         cropped_image = frame_original[crop_y1+20:crop_y2-20, crop_x1:crop_x2]
-        cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
+        # cropped_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
 
         # todo: change brightness
         # Increase or decrease brightness by adjusting pixel values
-        brightness_factor = 1.5  # You can adjust this factor to control brightness
+        brightness_factor = 1.4  # You can adjust this factor to control brightness
         cropped_image = np.clip(cropped_image * brightness_factor, 0, 255).astype(np.uint8)
         
         
@@ -257,7 +257,7 @@ class CameraViewer(QMainWindow):
 
         # Resize the rendered frame to a larger resolution for display
         rendered_frame_large = cv2.resize(self.rendered_frame_small, (720, 480)) 
-        # rendered_frame_large = cv2.cvtColor(rendered_frame_large, cv2.COLOR_RGB2BGR)
+        rendered_frame_large = cv2.cvtColor(rendered_frame_large, cv2.COLOR_RGB2BGR)
         # Save the frame to the video file (if video recording is enabled)
         if self.save_video:
             self.out.write(rendered_frame_large)
@@ -374,9 +374,9 @@ if __name__ == "__main__":
 
     # Assuming you initialize drone_state as 'landed' or 'flying' elsewhere in your script
     in_flight = False
-    mock = True
+    mock = False
     control_with_kb = True
-    save_video = False
+    save_video = True
     time_ls = []
     
     drone_ops = DroneUtils(tello, in_flight)
