@@ -5,8 +5,8 @@ nc: 3  # Number of classes
 names: ['empty', 'half', 'full']  # Class names
 
 # Paths for training and validation datasets
-train: /Users/richtsai1103/liquid_level_drone/dataset/trainval_dataset/images/train/
-val: /Users/richtsai1103/liquid_level_drone/dataset/trainval_dataset/images/val
+train: /dataset/trainval_dataset/images/train/
+val: /dataset/trainval_dataset/images/val
 
 # Number of channels, for RGB images it's 3
 channels: 3

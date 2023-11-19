@@ -176,16 +176,16 @@ class DroneUtils:
         # move forward and backward when the bbox is not at the corner (means mistake)
         # todo: tune the threshold
         
-        if not (bbox[0]<20) or (bbox[1]<20) or bbox[2]>300 or bbox[3]>300:
-            if distance < distance_threshold[0]:
-                # Move forward
-                self.execute_drone_command('move_forward')
-                print('Centering: Move Forward')
+        # if not (bbox[0]<20) or (bbox[1]<20) or bbox[2]>300 or bbox[3]>300:
+        #     if distance < distance_threshold[0]:
+        #         # Move forward
+        #         self.execute_drone_command('move_forward')
+        #         print('Centering: Move Forward')
                 
-            elif distance > distance_threshold[1]:
-                # Move back
-                self.execute_drone_command('move_back')
-                print('Centering: Move Back')
+        #     elif distance > distance_threshold[1]:
+        #         # Move back
+        #         self.execute_drone_command('move_back')
+        #         print('Centering: Move Back')
                 
         if abs(delta_x) <= threshold \
             and abs(delta_y) <= threshold \

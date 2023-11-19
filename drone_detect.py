@@ -13,6 +13,7 @@ import os
 import speech_recognition as sr
 import numpy as np
 import json
+import argparse
 
 import sys
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
@@ -34,7 +35,8 @@ TELLO_IP = config.get('tello', 'ip')
 # Paths (change these paths as per your system)
 exp = "exp_500"
 root_path =  "/Users/richtsai1103/liquid_level_drone"
-weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/best_small640.pt")
+model_name = "best_small640"
+weights_path = os.path.join(root_path, f"yolov5/runs/train/{exp}/weights/{model_name}.pt")
 model_path = os.path.join(root_path, "yolov5/")
 
 # ACTIONS TO COMMANDS MAPPING
@@ -134,6 +136,7 @@ def listen_to_commands(drone_ops, mock):
         print(f"Error in recognizing speech: {e}")
 
 
+result_timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 class CameraViewer(QMainWindow):
     def __init__(self, save_video=False, file_format='mp4'):
@@ -157,7 +160,7 @@ class CameraViewer(QMainWindow):
         self.video_height = 640  # Height of the output video frame
         self.output_directory = os.path.join('video_result', exp)  # Modify 'exp' to your desired experiment name
         os.makedirs(self.output_directory, exist_ok=True)
-        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.timestamp = result_timestamp
         self.output_file = f'video_{self.timestamp}' + f'.{self.file_format}'
         self.output_path = os.path.join(self.output_directory, self.output_file)
         
@@ -334,11 +337,11 @@ def handle_key_press(key, drone_control_kb):
         ### This command is used to save out the experiment result after navigation
         elif key.char == 't':
             if drone_control_kb['navigation'] == False:
-                t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                t = result_timestamp
                 # save out result to json
-                if not os.path.exists(f"exp_result/{exp}"):
-                    os.mkdir(f"exp_result/{exp}")
-                with open(f"exp_result/{exp}/res_{t}.json", "w") as json_file:
+                if not os.path.exists(f"exp_result/{exp}/{model_name}"):
+                    os.mkdir(f"exp_result/{exp}/{model_name}")
+                with open(f"exp_result/{exp}/{model_name}/res_{t}.json", "w") as json_file:
                     json.dump(drone_ops.all_res, json_file)
             
     except AttributeError:
@@ -357,6 +360,22 @@ def handle_key_press(key, drone_control_kb):
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser(description="Control the drone with keyboard and mock options")
+    parser.add_argument("--control_with_kb", action="store_true", help="Enable keyboard control")
+    parser.add_argument("--mock", action="store_true", help="Use mock execution of drone commands")
+    parser.add_argument("--save_video", action="store_true", help="Save video after running the experiment")
+
+    # Parse command-line arguments
+    args = parser.parse_args()
+    
+    # Set the control options based on parsed arguments
+    control_with_kb = args.control_with_kb
+    mock = args.mock
+    save_video = args.save_video
+    
+    # Assuming you initialize drone_state as 'landed' or 'flying' elsewhere in your script
+    in_flight = False
+    
     # Check CUDA availability
     USE_CUDA = torch.cuda.is_available()
     DEVICE = 'cuda:0' if USE_CUDA else 'cpu'
@@ -371,13 +390,6 @@ if __name__ == "__main__":
     print("Start Drone")
     tello = Tello(TELLO_IP)
     tello.connect(False)
-
-    # Assuming you initialize drone_state as 'landed' or 'flying' elsewhere in your script
-    in_flight = False
-    mock = False
-    control_with_kb = True
-    save_video = True
-    time_ls = []
     
     drone_ops = DroneUtils(tello, in_flight)
     # start video streaming 
