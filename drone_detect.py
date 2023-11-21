@@ -156,8 +156,8 @@ class CameraViewer(QMainWindow):
         
         # Initialize video recording attributes
         self.fps = 30.0  # Frames per second
-        self.video_width = 640  # Width of the output video frame
-        self.video_height = 640  # Height of the output video frame
+        self.video_width = 720  # Width of the output video frame
+        self.video_height = 480  # Height of the output video frame
         self.output_directory = os.path.join('video_result', exp)  # Modify 'exp' to your desired experiment name
         os.makedirs(self.output_directory, exist_ok=True)
         self.timestamp = result_timestamp
@@ -259,7 +259,7 @@ class CameraViewer(QMainWindow):
             pass
 
         # Resize the rendered frame to a larger resolution for display
-        rendered_frame_large = cv2.resize(self.rendered_frame_small, (720, 480)) 
+        rendered_frame_large = cv2.resize(self.rendered_frame_small, (self.video_width, self.video_height)) 
         rendered_frame_large = cv2.cvtColor(rendered_frame_large, cv2.COLOR_RGB2BGR)
         # Save the frame to the video file (if video recording is enabled)
         if self.save_video:
