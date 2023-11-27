@@ -260,7 +260,7 @@ class CameraViewer(QMainWindow):
 
         # Resize the rendered frame to a larger resolution for display
         rendered_frame_large = cv2.resize(self.rendered_frame_small, (self.video_width, self.video_height)) 
-        rendered_frame_large = cv2.cvtColor(rendered_frame_large, cv2.COLOR_RGB2BGR)
+        # rendered_frame_large = cv2.cvtColor(rendered_frame_large, cv2.COLOR_RGB2BGR)
         # Save the frame to the video file (if video recording is enabled)
         if self.save_video:
             self.out.write(rendered_frame_large)
@@ -268,7 +268,7 @@ class CameraViewer(QMainWindow):
         # render to QImage (since cv2 will block keyboard control)
         rendered_height, rendered_width, _ = rendered_frame_large.shape 
         bytes_per_line = 3 * rendered_width
-        q_image = QImage(rendered_frame_large, rendered_width, rendered_height, bytes_per_line, QImage.Format_BGR888)
+        q_image = QImage(rendered_frame_large, rendered_width, rendered_height, bytes_per_line, QImage.Format_RGB888)
 
         # Display the QImage in the QLabel
         self.label.setPixmap(QPixmap.fromImage(q_image))

@@ -47,7 +47,7 @@ if __name__ == "__main__":
 # Usage example:
 
     experiment = 'exp_500'
-    input_video = 'video_2023-11-11_16-06-01.avi'
-    output_video = 'video_2023-11-11_16-06-01.mp4'
+    input_video = 'video_2023-11-20_22-31-45.avi'
+    output_video = 'video_2023-11-20_22-31-45.mp4'
 
     convert_avi_to_mp4(input_video, output_video, experiment)
