@@ -88,22 +88,24 @@ Add Terminal and your preferred IDE to the list of apps with accessibility acces
 
 ## Training on Customized Data
 If you want to let the model to detect other objects, you can follow the steps below.
+1. Image Data Annotation
+Annotate the dataset with labeling tool VIA4 by outlining bounding boxes around containers within the images, and then save the annotation out as annotations.csv file
 
-1. Dataset Setup
+2. Dataset Setup
 ```
 dataset
      |—image
          |—image_1.jpg
-     |—aggregated_annotations.csv
+     |annotations.csv
 ```
 
-2. Data Preparation
+3. Data Preparation
 Run the data preparation script to reformat and normalized the labels and image data.
 ```
 python3 data_prep.py
 ```
 
-3. Training
+4. Training
 Train the YOLOv5 model using the following command. Make sure to adjust the directory name in your YAML file and any other necessary arguments:
 ```
 python3 yolov5/train.py --img 640 --batch 16 --epochs 100 --data liquid.yaml --cfg yolov5/models/yolov5s.yaml
