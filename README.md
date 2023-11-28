@@ -3,11 +3,8 @@
 This script enables the detection of liquid levels (empty, half, full) using drone technology and YOLOv5. It can be applied in various scenarios, such as beverage packaging factories or chemical facilities, to monitor and manage liquid levels effectively. We also integrated the drone-based liquid level detection system into industrial settings, improving production quality control by identifying bottles with incorrect liquid levels, thereby ensuring product quality compliance and increasing efficiency.
 
 # Demonstration
-<div style="display: flex; flex-wrap: nowrap; justify-content: space-between;">
-  <iframe width="45%" height="315" src="https://www.youtube.com/embed/s8gKVEfDRzM" frameborder="0" allowfullscreen></iframe>
-  
-  <img src="demo/demo_output.PNG" alt="Image" width="45%">
-</div>
+[![Video](https://img.youtube.com/vi/s8gKVEfDRzM/0.jpg)](https://www.youtube.com/watch?v=s8gKVEfDRzM)
+
 
 
 ## Setup
