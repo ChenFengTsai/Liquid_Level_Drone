@@ -6,13 +6,12 @@ This script enables the detection of liquid levels (empty, half, full) using dro
 This video is a short demo of the navigation system integrated with liquid level detection feature.
 ![demo_gif](https://github.com/ChenFengTsai/Liquid_Level_Drone/assets/65129139/482727a7-ea9f-4b6a-97b9-e5eef0d3169c)
 
+
 The final detection report will be sent to the user for reference.
 ![My Image](demo/demo_output.PNG)
 
+
 For more detailed drone demo, click on this [video link](https://www.youtube.com/watch?v=s8gKVEfDRzM).
-
-
-
 
 ## Setup
 Follow these instructions to set up the project on your local machine:
