@@ -89,7 +89,7 @@ Add Terminal and your preferred IDE to the list of apps with accessibility acces
 ## Training on Customized Data
 If you want to let the model to detect other objects, you can follow the steps below.
 1. Image Data Annotation
-Annotate the dataset with labeling tool VIA4 by outlining bounding boxes around containers within the images, and then save the annotation out as annotations.csv file
+Annotate the dataset with labeling tool VIA4 by outlining bounding boxes around containers within the images, and then save the annotation out as `annotations.csv` file
 
 2. Dataset Setup
 ```
