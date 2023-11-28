@@ -5,7 +5,7 @@ This script enables the detection of liquid levels (empty, half, full) using dro
 # Demonstration
 <div style="display: flex; flex-wrap: nowrap; justify-content: space-between;">
   <video width="45%" controls>
-    <source src="demo/demo_video.MP4">
+    <source src="https://youtu.be/s8gKVEfDRzM">
     Your browser does not support the video tag.
   </video>
   
