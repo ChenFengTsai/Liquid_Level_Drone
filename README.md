@@ -25,15 +25,18 @@ git clone https://github.com/ChenFengTsai/Liquid_Level_Drone.git
 ```
 
 2. Fork the YOLOv5 Repository
+
 Fork the YOLOv5 repository to your own GitHub account.
 
 3. Clone the Forked YOLOv5 Repository
+
 Go to the project directory and clone your forked YOLOv5 repository to your project directory:
 ```
 git clone https://github.com/your-username/yolov5.git
 ```
 
 4. Install Dependencies
+
 If you are using Poetry for package management, run the following command to install the project dependencies:
 ```
 grep -vE '^\s*#' requirements.txt | xargs -n 1 poetry add -D
@@ -45,6 +48,7 @@ pip install -r requirements.txt
 ```
 
 5. Create a Virtual Environment (Optional)
+
 If you are not using Poetry and prefer a virtual environment, you can create one with the following command:
 ```
 poetry shell
@@ -60,6 +64,7 @@ python3 drone_utils.py
 ```
 
 8. Run Detection
+
 Execute the drone_detect.py file to see the detection results. You can choose among mock execution, control with the keyboard and speech recognition. To change the execution mode, use different argparse parameters in the command line:
 
 ### Command-Line Parameters
