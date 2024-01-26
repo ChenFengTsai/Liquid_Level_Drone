@@ -55,9 +55,11 @@ poetry shell
 ```
 
 6. Configuration File
+
 Create a `config.ini` file that includes your API key, Tello IP, and WiFi IP.
 
 7. Connect to the Drone
+
 Connect to your drone and ensure it's connected to your computer through the wifi. (Run drone_utils.py to connect your drone to the private wifi)
 ```
 python3 drone_utils.py
@@ -96,6 +98,7 @@ If control_with_kb is specified, it will be in keyboard control model and below 
 * Esc: Land
 
 9. Configure Keyboard Control on Mac
+
 If you want to use the keyboard to control the drone on Mac, follow these steps:
 
 Go to System Preferences > Privacy Tab > Accessibility.
