@@ -127,7 +127,9 @@ Run the data preparation script to reformat and normalized the labels and image 
 python3 data_prep.py
 ```
 
-4. Training
+4. Create liquid.yaml file (change name if you want) and include dataset information for training configuration. Look into the `liquid.yaml` file for more information.
+
+5. Training
 
 Train the YOLOv5 model using the following command. Make sure to adjust the directory name in your YAML file and any other necessary arguments:
 ```
